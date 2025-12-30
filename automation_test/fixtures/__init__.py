@@ -1,14 +1,13 @@
 """Test fixtures module."""
 
-from .common_fixtures import *
+from .common_fixtures import enable_tracing, login_to_prodoscore
+from .domain_fixtures import domain_config
+from .employee_fixtures import add_employees, employee_config
 
 __all__ = [
-    "logger",
-    "config",
-    "test_settings",
-    "browser_manager",
-    "browser",
-    "context",
-    "page",
-    "db_client",
+    "login_to_prodoscore",
+    "domain_config",
+    "enable_tracing",
+    "employee_config",
+    "add_employees",
 ]

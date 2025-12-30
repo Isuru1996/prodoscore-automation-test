@@ -1,8 +1,7 @@
 """Pytest configuration and fixtures for tests."""
 
 # Import all fixtures from the fixtures module
-from automation_test.fixtures.app_fixtures import fake_employee, test_domain
-from automation_test.fixtures.common_fixtures import (
+from automation_lib.fixtures import (
     browser,
     browser_manager,
     config,
@@ -13,9 +12,16 @@ from automation_test.fixtures.common_fixtures import (
     test_settings,
 )
 
+from automation_test.fixtures import (
+    add_employees,
+    domain_config,
+    employee_config,
+    enable_tracing,
+    login_to_prodoscore,
+)
+from automation_test.plugins import slack_reporter
+
 __all__ = [
-    "fake_employee",
-    "test_domain",
     "logger",
     "config",
     "test_settings",
@@ -24,4 +30,9 @@ __all__ = [
     "context",
     "page",
     "db_client",
+    "domain_config",
+    "employee_config",
+    "login_to_prodoscore",
+    "enable_tracing",
+    "add_employees",
 ]
