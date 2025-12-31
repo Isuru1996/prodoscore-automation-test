@@ -90,3 +90,18 @@ def bulk_insert_employee_prodoscores(
         for p in prodoscores
     ]
     db_client.bulk_insert(sql, params_list)
+
+
+def delete_employee_prodoscore(db_client, filter_condition: str) -> int:
+    """
+    Delete EmployeeProdoscore records from the database based on a filter condition.
+
+    Args:
+        db_client: The database client/connection.
+        filter_condition: SQL WHERE clause condition as a string (e.g., "date >= '2024-01-01' and domain_id = '123'").
+
+    Returns:
+        Number of deleted rows.
+    """
+    sql = f"DELETE FROM proapp_employee_prodoscore WHERE {filter_condition}"
+    return db_client.execute_update(sql)

@@ -20,6 +20,8 @@ db:
 # Test Data
 test_data:
   number_of_employees: 6
+  manager_page:
+    test_data_file: config/testdata/manager_page/manager_page_data.json
 
 # Domain details
 domain:

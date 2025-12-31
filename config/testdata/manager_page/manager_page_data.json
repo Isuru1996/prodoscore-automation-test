@@ -1,0 +1,62 @@
+{
+  "test_sample1": {
+    "employee_prodoscores": [
+      {
+        "score": 2,
+        "ip_int_ext": 1,
+        "total_gap_time": 210,
+        "total_active_time": 1,
+        "gap_times": "[[0,210]]",
+        "first_last_activity_times": "[-1,-1]"
+      },
+      {
+        "score": 3,
+        "ip_int_ext": 0,
+        "total_gap_time": 310,
+        "total_active_time": 1,
+        "gap_times": "[[0,310]]",
+        "first_last_activity_times": "[-1,-1]"
+      }
+    ]
+  },
+  "test_sample2": {
+    "employee_prodoscores": [
+        {
+            "score": 2,
+            "ip_int_ext": 1,
+            "total_gap_time": 210,
+            "total_active_time": 1,
+            "gap_times": "[[0,210]]",
+            "first_last_activity_times": "[-1,-1]"
+        },
+        {
+            "score": 3,
+            "ip_int_ext": 0,
+            "total_gap_time": 310,
+            "total_active_time": 1,
+            "gap_times": "[[0,310]]",
+            "first_last_activity_times": "[-1,-1]"
+        },
+        {
+            "score": 4,
+            "ip_int_ext": 1,
+            "total_gap_time": 410,
+            "total_active_time": 1,
+            "gap_times": "[[0,410]]",
+            "first_last_activity_times": "[-1,-1]"
+        }
+    ]
+  },
+  "test_sample3": {
+    "employee_prodoscores": [
+        {
+            "score": 2,
+            "ip_int_ext": 1,
+            "total_gap_time": 210,
+            "total_active_time": 1,
+            "gap_times": "[[0,210]]",
+            "first_last_activity_times": "[-1,-1]"
+        }
+    ]
+  }
+}

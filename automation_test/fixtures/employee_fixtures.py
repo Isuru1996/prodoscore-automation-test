@@ -26,7 +26,7 @@ def employee_config(db_client, config, test_employees, logger):
     yield employees
 
     logger.info(f"Tearing down employees")
-    # update_employees_default(db_client, domain_id, login_user_id)
+    update_employees_default(db_client, domain_id, login_user_id)
 
 
 @pytest.fixture(scope="session", autouse=True, name="test_employees")
@@ -42,4 +42,4 @@ def add_employees(db_client, config, logger):
     yield inserted_ids
 
     logger.info(f"Tearing down test employees")
-    # delete_employees(db_client, inserted_ids)
+    delete_employees(db_client, inserted_ids)

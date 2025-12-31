@@ -14,9 +14,12 @@ from automation_lib.fixtures import (
 
 from automation_test.fixtures import (
     add_employees,
+    current_date,
+    delete_database_data,
     domain_config,
     employee_config,
     enable_tracing,
+    from_date,
     login_to_prodoscore,
 )
 from automation_test.plugins import slack_reporter
@@ -35,4 +38,7 @@ __all__ = [
     "login_to_prodoscore",
     "enable_tracing",
     "add_employees",
+    "from_date",
+    "current_date",
+    "delete_database_data",
 ]
