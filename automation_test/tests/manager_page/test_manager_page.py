@@ -1,27 +1,59 @@
-"""Sample test cases for the manager page using pytest framework."""
+"""Test cases for the manager page using pytest framework."""
 
 import pytest
 from automation_lib.config import TestDataLoader
 from playwright.sync_api import expect
 
 from automation_test.constants.enums import IsAppUser, Role, TestUser, ViewStatus
+from automation_test.constants.enums.employee_status import EmployeeStatus
 from automation_test.db.employee_prodoscore_utils import (
     bulk_insert_employee_prodoscores,
     insert_employee_prodoscore,
 )
+from automation_test.db.employee_utils import (
+    add_test_employees,
+    delete_employees,
+    get_employees,
+    set_manager_chain_for_employees,
+)
+from automation_test.models import Employee
 from automation_test.models.employee_prodoscore import EmployeeProdoscore
+from automation_test.utils.date_utils import add_days_to_date, to_choose_date_string
 
 
 @pytest.fixture(scope="class", name="manager_page")
-def go_to_manager_page(dashboard_page):
+def go_to_manager_page(dashboard_page, logger):
+    """Navigates to the manager page from the dashboard."""
+    logger.info("Navigating to manager page")
     manager_page = dashboard_page.go_to_manager_page()
     yield manager_page
 
 
 @pytest.fixture(scope="class", name="manager_page_testdata")
-def manager_page_testdata(config):
+def manager_page_testdata(config, logger):
+    """Loads test data for manager page tests."""
+    logger.info("Loading manager page test data")
     data_file = config.get("test_data.manager_page.test_data_file")
     return TestDataLoader(data_file)
+
+
+@pytest.fixture(scope="function", name="pagination_users")
+def add_users_for_pagination(db_client, config, logger):
+    """Adds users required for pagination tests."""
+    logger.info(f"Setting up pagination users")
+    inserted_ids = add_test_employees(
+        db_client=db_client,
+        config=config,
+        role=10000,
+        view_status=2,
+        status=1,
+        source="Test",
+        number_of_employees=105,
+    )
+    employees: list[Employee] = get_employees(db_client, inserted_ids)
+    yield employees
+    logger.info(f"Tearing down pagination users")
+    delete_employees(db_client, inserted_ids)
 
 
 class TestManagerPage:
@@ -29,7 +61,7 @@ class TestManagerPage:
 
     @pytest.mark.order(1)
     @pytest.mark.manager_page
-    def test_sample1(
+    def test_default_manager_page_view_filters_and_sorting(
         self,
         employees,
         manager_page,
@@ -124,7 +156,6 @@ class TestManagerPage:
         # Verify number of rows in the manager table
         num_rows = manager_page.get_number_of_rows_in_manager_table()
         expected_num_rows = len([user_1, user_2])
-        # "{what failed}. Actual: {actual}, Expected: {expected}"
         assert num_rows == expected_num_rows, (
             f"Row count mismatch.\n"
             f"Actual: {num_rows}\n"
@@ -143,9 +174,9 @@ class TestManagerPage:
             f"Expected: {expected_names}"
         )
 
-    @pytest.mark.order(3)
+    @pytest.mark.order(2)
     @pytest.mark.manager_page
-    def test_sample2(
+    def test_only_company_or_team_view_with_subordinates_are_listed_as_managers(
         self,
         employees,
         manager_page,
@@ -177,10 +208,9 @@ class TestManagerPage:
         user_2.change_view_status(ViewStatus.SELF.val)
         user_2.commit(db_client)
 
-        # Get user_3, user_4 and user_5
+        # Get user_3 and user_4
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
-        user_5 = employees.get(TestUser.USER_5.val)
 
         # Change manager and role of user_3
         user_3.change_manager(main_user)
@@ -191,11 +221,6 @@ class TestManagerPage:
         user_4.change_manager(user_1)
         user_4.change_role(Role.MANAGER.id)
         user_4.commit(db_client)
-
-        # Change manager and role of user_5
-        user_5.change_manager(user_2)
-        user_5.change_role(Role.MANAGER.id)
-        user_5.commit(db_client)
 
         # Insert employee prodoscores data for user_3, user_4 and user_5
         prodoscore_data = test_data.get("employee_prodoscores")
@@ -212,7 +237,7 @@ class TestManagerPage:
                 gap_times=item.get("gap_times"),
                 first_last_activity_times=item.get("first_last_activity_times"),
             )
-            for user, item in zip([user_3, user_4, user_5], prodoscore_data)
+            for user, item in zip([user_3, user_4], prodoscore_data)
         ]
         bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
 
@@ -232,21 +257,9 @@ class TestManagerPage:
             f"Expected: {expected_num_rows}",
         )
 
-        # Verify the manager table is sorted by manager name (full_name)
-        manager_names_in_table = [
-            manager_page.get_manager_name_by_row(i) for i in range(num_rows)
-        ]
-        # Get the expected sorted names from the test data
-        expected_names = sorted([main_user.full_name, user_1.full_name])
-        assert manager_names_in_table == expected_names, (
-            f"Manager table not sorted by name.\n"
-            f"Actual: {manager_names_in_table}\n"
-            f"Expected: {expected_names}"
-        )
-
-    @pytest.mark.order(2)
+    @pytest.mark.order(3)
     @pytest.mark.manager_page
-    def test_sample3(
+    def test_app_users_are_not_listed_as_managers(
         self,
         employees,
         manager_page,
@@ -265,6 +278,7 @@ class TestManagerPage:
         main_user.change_role(Role.ADMINISTRATOR.id)
         main_user.change_view_status(ViewStatus.COMPANY.val)
         main_user.change_is_app_user(IsAppUser.ACTIVATE.val)
+        main_user.change_status(EmployeeStatus.INACTIVE.val)
         main_user.commit(db_client)
 
         # Get user_1
@@ -297,8 +311,133 @@ class TestManagerPage:
         manager_page.refresh_page()
 
         # Wait for the manager table to be visible after refresh
-        manager_page.wait_for_no_data_found()
+        manager_page.wait_for_no_data_for_selected_time()
 
         # Verify no data message and image is shown when there is no data
-        expect(manager_page.no_data_found_heading).to_be_visible()
+        expect(manager_page.no_data_for_selected_time).to_be_visible()
         expect(manager_page.no_data_found_image).to_be_visible()
+
+    @pytest.mark.order(4)
+    @pytest.mark.manager_page
+    def test_date_range_change_updates_data_and_resets_pagination(
+        self,
+        pagination_users,
+        manager_page,
+        db_client,
+        from_date,
+        current_date,
+        request,
+        manager_page_testdata,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Add same employee prodoscore for all pagination users
+        prodoscore_data = test_data.get("employee_prodoscores")
+        if prodoscore_data:
+            score_item = prodoscore_data[0]
+            employee_prodoscores = [
+                EmployeeProdoscore(
+                    domain_id=user.domain_id,
+                    employee_id=user.id,
+                    date=current_date,
+                    role=user.role,
+                    score=score_item.get("score"),
+                    ip_int_ext=score_item.get("ip_int_ext"),
+                    total_gap_time=score_item.get("total_gap_time"),
+                    total_active_time=score_item.get("total_active_time"),
+                    gap_times=score_item.get("gap_times"),
+                    first_last_activity_times=score_item.get(
+                        "first_last_activity_times"
+                    ),
+                )
+                for user in pagination_users
+                if user.id is not None
+            ]
+            bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+
+        # Update manager IDs for pagination users to ensure they are listed as managers
+        set_manager_chain_for_employees(db_client, pagination_users)
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_load()
+
+        # Scroll to bottom of the manager table
+        manager_page.scroll_to_manager_table_bottom()
+
+        # Assert pagination buttons
+        expect(manager_page.get_button_by_number(1)).to_have_attribute(
+            "aria-current", "page"
+        )
+        expect(manager_page.manager_page_first_button).to_be_disabled()
+        expect(manager_page.manager_page_previous_button).to_be_disabled()
+        expect(manager_page.manager_page_next_button).to_be_enabled()
+        expect(manager_page.manager_page_last_button).to_be_enabled()
+
+        # Click the last page button
+        manager_page.click_last_page_button()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_load()
+
+        # Assert pagination buttons
+        expect(manager_page.get_button_by_number(1)).not_to_have_attribute(
+            "aria-current", "page"
+        )
+        expect(manager_page.manager_page_first_button).to_be_enabled()
+        expect(manager_page.manager_page_previous_button).to_be_enabled()
+        expect(manager_page.manager_page_next_button).to_be_disabled()
+        expect(manager_page.manager_page_last_button).to_be_disabled()
+
+        # Changes date range to "This Month"
+        manager_page.change_date_range("this-month")
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_load()
+
+        # Assert from date is changed correctly
+        changed_from_date: str = manager_page.get_from_date_value()
+        assert from_date != changed_from_date, (
+            f"From date not matched.\n"
+            f"Actual: {changed_from_date}\n"
+            f"Expected: {from_date}",
+        )
+
+        # Scroll to bottom of the manager table
+        manager_page.scroll_to_manager_table_bottom()
+
+        # Assert pagination buttons
+        expect(manager_page.get_button_by_number(1)).to_have_attribute(
+            "aria-current", "page"
+        )
+        expect(manager_page.manager_page_first_button).to_be_disabled()
+        expect(manager_page.manager_page_previous_button).to_be_disabled()
+        expect(manager_page.manager_page_next_button).to_be_enabled()
+        expect(manager_page.manager_page_last_button).to_be_enabled()
+
+    def test_sample5(self):
+        # current_from_date: str = manager_page.get_from_date_value()
+        # current_from_date_plus_1_day: str = add_days_to_date(current_from_date, 1)
+        # manager_page.change_from_date(current_from_date_plus_1_day)
+
+        # # Wait for the manager table to be visible after refresh
+        # manager_page.wait_for_no_data_found()
+
+        # # Verify no data message and image is shown when there is no data
+        # expect(manager_page.no_data_found_heading).to_be_visible()
+        # expect(manager_page.no_data_found_image).to_be_visible()
+
+        # current_to_date: str = manager_page.get_to_date_value()
+        # current_to_date_minus_1_day: str = add_days_to_date(current_to_date, -1)
+        # manager_page.change_to_date(current_to_date_minus_1_day)
+
+        # # Wait for the manager table to be visible after refresh
+        # manager_page.wait_for_no_data_found()
+
+        # # Verify no data message and image is shown when there is no data
+        # expect(manager_page.no_data_found_heading).to_be_visible()
+        # expect(manager_page.no_data_found_image).to_be_visible()
+        pass

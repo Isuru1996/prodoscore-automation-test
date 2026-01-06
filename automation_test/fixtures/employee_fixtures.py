@@ -37,7 +37,7 @@ def add_employees(db_client, config, logger):
     Returns a list of Employee objects for fake employees.
     """
     logger.info(f"Setting up test employees")
-    inserted_ids = add_test_employees(db_client, config, 0, 1, 1, "Base")
+    inserted_ids = add_test_employees(db_client, config, 0, 1, 1, "Base", 6)
 
     yield inserted_ids
 

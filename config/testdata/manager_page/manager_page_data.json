@@ -1,5 +1,5 @@
 {
-  "test_sample1": {
+  "test_default_manager_page_view_filters_and_sorting": {
     "employee_prodoscores": [
       {
         "score": 2,
@@ -19,7 +19,7 @@
       }
     ]
   },
-  "test_sample2": {
+  "test_only_company_or_team_view_with_subordinates_are_listed_as_managers": {
     "employee_prodoscores": [
         {
             "score": 2,
@@ -47,7 +47,19 @@
         }
     ]
   },
-  "test_sample3": {
+  "test_app_users_are_not_listed_as_managers": {
+    "employee_prodoscores": [
+        {
+            "score": 2,
+            "ip_int_ext": 1,
+            "total_gap_time": 210,
+            "total_active_time": 1,
+            "gap_times": "[[0,210]]",
+            "first_last_activity_times": "[-1,-1]"
+        }
+    ]
+  },
+  "test_date_range_change_updates_data_and_resets_pagination": {
     "employee_prodoscores": [
         {
             "score": 2,

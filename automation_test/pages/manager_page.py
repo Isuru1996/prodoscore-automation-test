@@ -1,5 +1,7 @@
 from automation_lib.core import BasePage
 
+from automation_test.utils.date_utils import to_choose_date_string
+
 
 class ManagerPage(BasePage):
 
@@ -145,12 +147,93 @@ class ManagerPage(BasePage):
         return self.page.get_by_role("heading", name="No Data Found At This Time.")
 
     @property
+    def no_data_for_selected_time(self):
+        return self.page.get_by_role("heading", name="No data for selected time")
+
+    @property
     def no_data_found_image(self):
         return self.page.get_by_role("img", name="No Data")
 
     @property
     def manager_table_first_row(self):
         return self.page.locator("table tbody tr").nth(1)
+
+    @property
+    def manager_page_next_button(self):
+        return self.page.get_by_role("button", name="Next page")
+
+    @property
+    def manager_page_last_button(self):
+        return self.page.get_by_role("button", name="Last page")
+
+    @property
+    def manager_page_previous_button(self):
+        return self.page.get_by_role("button", name="Previous page")
+
+    @property
+    def manager_page_first_button(self):
+        return self.page.get_by_role("button", name="First page")
+
+    def get_button_by_number(self, page_number: int):
+        return self.page.get_by_role("button", name=str(page_number), exact=True)
+
+    def click_button_by_number(self, number):
+        """Click on the pagination button by number."""
+        self.get_button_by_number(number).click()
+
+    def scroll_to_manager_table_bottom(self) -> None:
+        """Scroll to the bottom of the manager table."""
+        self.scroll_into_view_locator(
+            self.manager_page_last_button, "Manager Page Last Button"
+        )
+
+    def click_next_page_button(self) -> None:
+        """Click the next page button in the pagination."""
+        self.click_locator(self.manager_page_next_button, "Manager Page Next Button")
+
+    def click_previous_page_button(self) -> None:
+        """Click the previous page button in the pagination."""
+        self.click_locator(
+            self.manager_page_previous_button, "Manager Page Previous Button"
+        )
+
+    def click_first_page_button(self) -> None:
+        """Click the first page button in the pagination."""
+        self.click_locator(self.manager_page_first_button, "Manager Page First Button")
+
+    def click_last_page_button(self) -> None:
+        """Click the last page button in the pagination."""
+        self.click_locator(self.manager_page_last_button, "Manager Page Last Button")
+
+    def change_date_range(self, date_range: str) -> None:
+        """Change the date range from the dropdown."""
+        self.date_range_dropdown.select_option(date_range)
+
+    def change_from_date(self, from_date: str) -> None:
+        """
+        Change the 'From' date in the date picker.
+        :param from_date: Date String
+        """
+        new_from_date_str: str = to_choose_date_string(from_date)
+        self.from_date_button.click()
+        self.page.get_by_role("option", name=new_from_date_str).click()
+
+    def change_to_date(self, to_date: str) -> None:
+        """
+        Change the 'To' date in the date picker.
+        :param to_date: Date String
+        """
+        new_to_date_str: str = to_choose_date_string(to_date)
+        self.to_date_button.click()
+        self.page.get_by_role("option", name=new_to_date_str).click()
+
+    def get_from_date_value(self) -> str:
+        """Get the current value of the 'From' date."""
+        return self.get_text(self.from_date_button, "From Date Button")
+
+    def get_to_date_value(self) -> str:
+        """Get the current value of the 'To' date."""
+        return self.get_text(self.to_date_button, "To Date Button")
 
     def wait_for_manager_table_load(self) -> None:
         """Wait for the manager table to load."""
@@ -168,6 +251,15 @@ class ManagerPage(BasePage):
             state="visible",
             timeout=10000,
             description="No Data Found Heading",
+        )
+
+    def wait_for_no_data_for_selected_time(self) -> None:
+        """Wait for the no data for selected time message to appear."""
+        self.wait_for(
+            self.no_data_for_selected_time,
+            state="visible",
+            timeout=10000,
+            description="No Data For Selected Time Heading",
         )
 
     def get_number_of_rows_in_manager_table(self) -> int:

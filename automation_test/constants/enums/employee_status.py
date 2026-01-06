@@ -3,8 +3,8 @@ from enum import Enum
 
 class EmployeeStatus(Enum):
     ACTIVE = 1
-    INACTIVE = 0
+    INACTIVE = -1
 
     @property
-    def status_val(self):
+    def val(self):
         return self.value

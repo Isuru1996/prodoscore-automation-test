@@ -105,6 +105,7 @@ def add_test_employees(
     view_status: int,
     status: int,
     source: str,
+    number_of_employees: int,
 ) -> List[int]:
     """
     Adds fake employees to the database for testing purposes.
@@ -118,9 +119,9 @@ def add_test_employees(
     """
     domain_id = config.get("domain.id")
     admin_email = config.get("domain.admin_email")
-    number_of_employees = config.get("test_data.number_of_employees")
     prodoscore_crypto_base_url = config.get("api_clients.prodoscore_crypto.base_url")
     employees_to_insert: List[Dict] = []
+    email_hashes: List[str] = []
     for i in range(1, number_of_employees + 1):
         email = f"{source.lower()}automationtest{i}@{admin_email.split('@')[1]}"
         prodoscore_crypto_client = ProdoscoreCryptoClient(
@@ -132,9 +133,8 @@ def add_test_employees(
         email_hash = hashed_email_response.hash
         email_cipher = encrypted_email_response.cipher
 
-        # Delete existing users
-        sql = "DELETE FROM proapp_employee WHERE email_hash = %s"
-        db_client.execute_update(sql, (email_hash,))
+        if email_hash:
+            email_hashes.append(email_hash)
 
         # Prepare employee row
         employee_row = {
@@ -151,6 +151,12 @@ def add_test_employees(
         }
         employees_to_insert.append(employee_row)
 
+    # Delete all existing users
+    if email_hashes:
+        placeholders = ", ".join(["%s"] * len(email_hashes))
+        sql = f"DELETE FROM proapp_employee WHERE email_hash IN ({placeholders})"
+        db_client.execute_update(sql, tuple(email_hashes))
+
     # Bulk insert using db_client.bulk_insert
     if employees_to_insert:
         columns = list(employees_to_insert[0].keys())
@@ -161,12 +167,11 @@ def add_test_employees(
         db_client.bulk_insert(sql, params_list)
 
         # Fetch IDs of inserted employees
-        emails = [row["email_hash"] for row in employees_to_insert]
-        placeholders = ", ".join(["%s"] * len(emails))
+        placeholders = ", ".join(["%s"] * len(email_hashes))
         select_sql = (
             f"SELECT id FROM proapp_employee WHERE email_hash IN ({placeholders})"
         )
-        results = db_client.fetch_all(select_sql, tuple(emails))
+        results = db_client.fetch_all(select_sql, tuple(email_hashes))
         inserted_ids = [row["id"] for row in results]
         return inserted_ids
     return []
@@ -186,3 +191,71 @@ def delete_employees(db_client, employee_ids: List[int]) -> int:
     placeholders = ", ".join(["%s"] * len(employee_ids))
     sql = f"DELETE FROM proapp_employee WHERE id IN ({placeholders})"
     return db_client.execute_update(sql, tuple(employee_ids))
+
+
+def get_employees(
+    db_client,
+    employee_ids: List[int],
+) -> List[Employee]:
+    """
+    Fetch employees from the database by a list of employee IDs.
+    Args:
+        db_client: The database client/connection.
+        employee_ids: List of employee IDs to fetch.
+    Returns:
+        List of Employee objects fetched from the DB.
+    """
+    if not employee_ids:
+        return []
+    placeholders = ", ".join(["%s"] * len(employee_ids))
+    sql = f"SELECT * FROM proapp_employee WHERE id IN ({placeholders})"
+    results = db_client.fetch_all(sql, tuple(employee_ids))
+    employees = [
+        Employee(
+            id=result["id"],
+            domain_id=result["domain_id"],
+            email=result["email"],
+            email_hash=result.get("email_hash"),
+            full_name=result.get("fullname"),
+            department_id=result.get("department_id"),
+            manager_id=result.get("manager_id"),
+            role=result.get("role"),
+            view_status=result.get("view_status"),
+            profile_id=result.get("profileId"),
+            status=result.get("status"),
+            password=result.get("password"),
+            details_enabled=result.get("details_enabled"),
+            report_email=result.get("report_email"),
+            report_enabled=result.get("report_enabled"),
+            activate_workshift=result.get("activate_workshift"),
+            is_app_user=result.get("is_app_user"),
+            time_zone=result.get("timezone"),
+            notices=result.get("notices"),
+            crx_status=result.get("crx_status"),
+            coll_id=result.get("coll_id"),
+            test_name=result.get("test_name"),
+        )
+        for result in results
+    ]
+    return employees
+
+
+def set_manager_chain_for_employees(db_client, employees: List[Employee]) -> None:
+    """
+    Bulk update manager_id for a list of employees.
+    Each employee's manager_id is set to the previous employee's id (wrap-around).
+    Args:
+        db_client: The database client/connection.
+        employees: List of Employee objects to update.
+    """
+    if not employees or len(employees) < 2:
+        return
+    update_rows = []
+    for i, emp in enumerate(employees):
+        # Previous employee id, wrap-around
+        prev_emp_id = employees[i - 1].id if i > 0 else employees[-1].id
+        if emp.id is not None and prev_emp_id is not None:
+            update_rows.append((prev_emp_id, emp.id))
+    # Bulk update
+    sql = "UPDATE proapp_employee SET manager_id = %s WHERE id = %s"
+    db_client.bulk_update(sql, update_rows)
