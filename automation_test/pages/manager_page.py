@@ -29,6 +29,10 @@ class ManagerPage(BasePage):
         return self.page.locator(".react-datepicker__input-container button").nth(1)
 
     @property
+    def notification_row(self):
+        return self.page.get_by_test_id("message-row")
+
+    @property
     def departments_text(self):
         return self.page.get_by_text("Departments", exact=True)
 
@@ -234,6 +238,29 @@ class ManagerPage(BasePage):
     def get_to_date_value(self) -> str:
         """Get the current value of the 'To' date."""
         return self.get_text(self.to_date_button, "To Date Button")
+
+    def wait_for_hidden_notification_row(self) -> None:
+        """Wait for the notification row to be hidden."""
+        self.wait_for(
+            self.notification_row,
+            state="hidden",
+            timeout=10000,
+            description="Notification Row",
+        )
+
+    def get_notification_type(self) -> str:
+        """Get the notification type from the notification row."""
+        notification_type: str = ""
+        notification_class = self.get_attribute(
+            self.notification_row, "class", "Notification Row"
+        )
+        if (
+            "bg-warning-100" in notification_class
+            and "border-warning-b" in notification_class
+        ):
+            notification_type = "warning"
+
+        return notification_type
 
     def wait_for_manager_table_load(self) -> None:
         """Wait for the manager table to load."""

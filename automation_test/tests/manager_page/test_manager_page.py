@@ -418,26 +418,38 @@ class TestManagerPage:
         expect(manager_page.manager_page_next_button).to_be_enabled()
         expect(manager_page.manager_page_last_button).to_be_enabled()
 
-    def test_sample5(self):
-        # current_from_date: str = manager_page.get_from_date_value()
-        # current_from_date_plus_1_day: str = add_days_to_date(current_from_date, 1)
-        # manager_page.change_from_date(current_from_date_plus_1_day)
+    @pytest.mark.order(5)
+    @pytest.mark.manager_page
+    def test_custom_range_invalid_shows_warning_and_blocks_apply_when_to_date_before_from_date(
+        self,
+        manager_page,
+        from_date,
+    ):
+        # Change to_date to less than current from_date
+        current_from_date_minus_1_day: str = add_days_to_date(from_date, -1)
+        manager_page.change_to_date(current_from_date_minus_1_day)
 
-        # # Wait for the manager table to be visible after refresh
-        # manager_page.wait_for_no_data_found()
+        # Validate notification message
+        expect(manager_page.notification_row).to_contain_text(
+            "Please set a To date after the From date."
+        )
 
-        # # Verify no data message and image is shown when there is no data
-        # expect(manager_page.no_data_found_heading).to_be_visible()
-        # expect(manager_page.no_data_found_image).to_be_visible()
+        # Validate notification type is warning
+        expected_type = "warning"
+        actual_type = manager_page.get_notification_type()
+        assert actual_type == expected_type, (
+            f"Notification type mismatch.\n"
+            f"Actual: {actual_type}\n"
+            f"Expected: {expected_type}"
+        )
 
-        # current_to_date: str = manager_page.get_to_date_value()
-        # current_to_date_minus_1_day: str = add_days_to_date(current_to_date, -1)
-        # manager_page.change_to_date(current_to_date_minus_1_day)
+        # Wait for notification to disappear
+        manager_page.wait_for_hidden_notification_row()
 
-        # # Wait for the manager table to be visible after refresh
-        # manager_page.wait_for_no_data_found()
-
-        # # Verify no data message and image is shown when there is no data
-        # expect(manager_page.no_data_found_heading).to_be_visible()
-        # expect(manager_page.no_data_found_image).to_be_visible()
-        pass
+        # Verify to date is reset to from_date
+        actual_to_date = manager_page.get_to_date_value()
+        assert actual_to_date == from_date, (
+            f"To date not reset to from date.\n"
+            f"Actual: {actual_to_date}\n"
+            f"Expected: {from_date}"
+        )
