@@ -1,9 +1,39 @@
+from datetime import datetime
+
 from automation_lib.core import BasePage
 
 from automation_test.utils.date_utils import to_choose_date_string
 
 
 class ManagerPage(BasePage):
+    @staticmethod
+    def class_to_color_name(class_str: str | None) -> str:
+        """
+        Map a CSS class string to a color name.
+        Example: 'bg-primary-red' -> 'red', 'bg-primary-blue' -> 'blue', etc.
+        Extend this mapping as needed for your color scheme.
+        """
+        if not class_str:
+            return "unknown"
+        color_map = {
+            # Text color classes
+            "text-ds-gray-600": "gray",
+            "text-ds-gray-950": "gray",
+            "text-ds-red-500": "red",
+            "text-ds-blue-500": "blue",
+            "text-black": "black",
+            # Background color classes
+            "bg-primary-red": "red",
+            "bg-primary-blue": "blue",
+            "bg-ds-gray-800": "gray",
+            "bg-warning-100": "yellow",
+            "bg-success-100": "green",
+            # Add more mappings as needed
+        }
+        for cls in class_str.split():
+            if cls in color_map:
+                return color_map[cls]
+        return "unknown"
 
     def __init__(self, page):
         super().__init__(page, page_name="ManagerPage")
@@ -27,6 +57,14 @@ class ManagerPage(BasePage):
     @property
     def to_date_button(self):
         return self.page.locator(".react-datepicker__input-container button").nth(1)
+
+    @property
+    def next_month_button(self):
+        return self.page.get_by_role("button", name="Next Month")
+
+    @property
+    def previous_month_button(self):
+        return self.page.get_by_role("button", name="Previous Month")
 
     @property
     def notification_row(self):
@@ -220,6 +258,30 @@ class ManagerPage(BasePage):
         """
         new_from_date_str: str = to_choose_date_string(from_date)
         self.from_date_button.click()
+
+        # Get current from date value
+        current_from_date_str = self.get_from_date_value()
+        try:
+            # Try parsing as 'MMM D, YYYY' (e.g., 'Jan 6, 2026')
+            current_date = datetime.strptime(current_from_date_str, "%b %d, %Y")
+            target_date = datetime.strptime(from_date, "%b %d, %Y")
+        except Exception:
+            # Fallback: try ISO format
+            current_date = datetime.fromisoformat(current_from_date_str)
+            target_date = datetime.fromisoformat(from_date)
+
+        if (
+            current_date.month < target_date.month
+            or current_date.year < target_date.year
+        ):
+            self.next_month_button.click()
+        elif (
+            current_date.month > target_date.month
+            or current_date.year > target_date.year
+        ):
+            self.previous_month_button.click()
+
+        # Now select the day
         self.page.get_by_role("option", name=new_from_date_str).click()
 
     def change_to_date(self, to_date: str) -> None:
@@ -229,6 +291,30 @@ class ManagerPage(BasePage):
         """
         new_to_date_str: str = to_choose_date_string(to_date)
         self.to_date_button.click()
+
+        # Get current to date value
+        current_to_date_str = self.get_to_date_value()
+        try:
+            # Try parsing as 'MMM D, YYYY' (e.g., 'Jan 6, 2026')
+            current_date = datetime.strptime(current_to_date_str, "%b %d, %Y")
+            target_date = datetime.strptime(to_date, "%b %d, %Y")
+        except Exception:
+            # Fallback: try ISO format
+            current_date = datetime.fromisoformat(current_to_date_str)
+            target_date = datetime.fromisoformat(to_date)
+
+        if (
+            current_date.month > target_date.month
+            or current_date.year > target_date.year
+        ):
+            self.previous_month_button.click()
+        elif (
+            current_date.month < target_date.month
+            or current_date.year < target_date.year
+        ):
+            self.next_month_button.click()
+
+        # Now select the day
         self.page.get_by_role("option", name=new_to_date_str).click()
 
     def get_from_date_value(self) -> str:
@@ -310,23 +396,52 @@ class ManagerPage(BasePage):
         )
 
     def get_manager_data(self, manager_name: str):
-        """Get the manager data from the table for a specific manager."""
+        """Get prodoscore, team distribution, and percent change values and colors for a specific manager."""
         row = self._get_manager_row(manager_name)
         tds = row.locator("td")
-        prodoscore = tds.nth(1).locator("p").inner_text()
-        team_distribution_div = tds.nth(2).locator("div.bg-primary-red")
-        team_distribution = team_distribution_div.inner_text()
-        team_distribution_color = team_distribution_div.evaluate(
-            "el => getComputedStyle(el).backgroundColor"
+
+        # Prodoscore value and color (from class)
+        prodoscore_p = tds.nth(1).locator("p")
+        prodoscore = prodoscore_p.inner_text()
+        prodoscore_class = prodoscore_p.get_attribute("class")
+        prodoscore_color = self.class_to_color_name(prodoscore_class)
+
+        # Team distribution: handle multiple bars (segments)
+        team_distribution_bars = []
+        team_distribution_bar_divs = tds.nth(2).locator("div.flex > div")
+        for i in range(team_distribution_bar_divs.count()):
+            bar = team_distribution_bar_divs.nth(i)
+            value = bar.inner_text()
+            bar_class = bar.get_attribute("class")
+            color = self.class_to_color_name(bar_class)
+            team_distribution_bars.append({"value": value, "color": color})
+        # Sort bars by color order: blue, gray, red
+        color_order = {"red": 0, "gray": 1, "blue": 2}
+        team_distribution_bars.sort(key=lambda x: color_order.get(x["color"], 99))
+
+        # Percent change value and color (from class)
+        percent_change_div = tds.nth(4).locator("div")
+        percent_change_p = percent_change_div.locator("p")
+        percent_change = percent_change_p.inner_text()
+        percent_change_class = percent_change_p.get_attribute("class")
+        percent_change_color = self.class_to_color_name(percent_change_class)
+
+        # Direct team prodoscore value and color (from class)
+        direct_team_prodoscore_p = tds.nth(3).locator("p")
+        direct_team_prodoscore = direct_team_prodoscore_p.inner_text()
+        direct_team_prodoscore_class = direct_team_prodoscore_p.get_attribute("class")
+        direct_team_prodoscore_color = self.class_to_color_name(
+            direct_team_prodoscore_class
         )
-        direct_team_prodoscore = tds.nth(3).locator("p").inner_text()
-        percent_change = tds.nth(4).locator("p").inner_text()
+
         return {
-            "prodoscore": prodoscore,
-            "team_distribution": team_distribution,
-            "team_distribution_color": team_distribution_color,
-            "direct_team_prodoscore": direct_team_prodoscore,
-            "percent_change": percent_change,
+            "prodoscore": {"score": int(prodoscore), "color": prodoscore_color},
+            "team_distribution": team_distribution_bars,
+            "direct_team_prodoscore": {
+                "score": int(direct_team_prodoscore),
+                "color": direct_team_prodoscore_color,
+            },
+            "percent_change": {"value": percent_change, "color": percent_change_color},
         }
 
     def sort_manager_table_by_manager_name(self) -> None:

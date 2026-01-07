@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 
@@ -11,10 +11,10 @@ class EmployeeProdoscore:
     role: int = 0
     score: float = 0.0
     ip_int_ext: int = 0
-    total_gap_time: int = 0
-    total_active_time: int = 0
-    gap_times: str = ""
-    first_last_activity_times: str = ""
+    total_gap_time: int = 100
+    total_active_time: int = 1
+    gap_times: str = "[[0,210]]"
+    first_last_activity_times: str = "[-1,-1]"
 
     def commit(self, db_util) -> None:
         """
