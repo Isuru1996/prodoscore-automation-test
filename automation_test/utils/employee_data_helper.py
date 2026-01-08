@@ -69,3 +69,49 @@ def get_team_distribution_bars(scores: list[float]) -> list[dict]:
     color_order = {"red": 0, "gray": 1, "blue": 2}
     bars.sort(key=lambda x: color_order.get(x["color"], 99))
     return bars
+
+
+def get_expected_team_distribution_tooltip(
+    subordinate_total_scores_list: list[float],
+) -> dict:
+    """
+    Given a list of subordinate scores, return the expected tooltip value dict for below/within/above average.
+    Structure matches the tooltip_data format.
+    """
+    scores = subordinate_total_scores_list
+    total = len(scores)
+    blue_count = sum(1 for s in scores if s >= 75)
+    gray_count = sum(1 for s in scores if 40 <= s < 75)
+    red_count = sum(1 for s in scores if s < 40)
+    return {
+        "below_average": {
+            "percentage": {
+                "value": f"{math.floor((red_count/total)*100)}%",
+                "color": "red",
+            },
+            "count": {
+                "value": str(red_count),
+                "color": "red",
+            },
+        },
+        "within_average": {
+            "percentage": {
+                "value": f"{math.floor((gray_count/total)*100)}%",
+                "color": "gray",
+            },
+            "count": {
+                "value": str(gray_count),
+                "color": "gray",
+            },
+        },
+        "above_average": {
+            "percentage": {
+                "value": f"{math.floor((blue_count/total)*100)}%",
+                "color": "blue",
+            },
+            "count": {
+                "value": str(blue_count),
+                "color": "blue",
+            },
+        },
+    }

@@ -19,6 +19,7 @@ class ManagerPage(BasePage):
             # Text color classes
             "text-ds-gray-600": "gray",
             "text-ds-gray-950": "gray",
+            "text-ds-gray-800": "gray",
             "text-ds-red-500": "red",
             "text-ds-blue-500": "blue",
             "text-black": "black",
@@ -216,6 +217,14 @@ class ManagerPage(BasePage):
     def manager_page_first_button(self):
         return self.page.get_by_role("button", name="First page")
 
+    @property
+    def team_distribution_tooltip(self):
+        return self.page.locator('div[role="tooltip"].tooltip-shadow')
+
+    @property
+    def manager_table_loading_bar(self):
+        return self.page.locator(".flex.space-x-2")
+
     def get_button_by_number(self, page_number: int):
         return self.page.get_by_role("button", name=str(page_number), exact=True)
 
@@ -357,6 +366,15 @@ class ManagerPage(BasePage):
             description="Manager Table First Row",
         )
 
+    def wait_for_manager_table_loading_complete(self) -> None:
+        """Wait for the manager table loading bar to disappear."""
+        self.wait_for(
+            self.manager_table_loading_bar,
+            state="hidden",
+            timeout=30000,
+            description="Manager Table Loading Bar",
+        )
+
     def wait_for_no_data_found(self) -> None:
         """Wait for the no data found message to appear."""
         self.wait_for(
@@ -443,6 +461,59 @@ class ManagerPage(BasePage):
             },
             "percent_change": {"value": percent_change, "color": percent_change_color},
         }
+
+    def get_team_distribution_bars_locator(self, manager_name: str):
+        """
+        Return the locator for the team distribution bars for a specific manager row.
+        This can be used to hover over the bars.
+        """
+        row = self._get_manager_row(manager_name)
+        return row.locator("td").nth(2).locator("div.flex > div")
+
+    def hover_team_distribution_bar_by_manager_name(
+        self, manager_name: str, bar_index: int = 0
+    ) -> None:
+        """
+        Hover over a specific team distribution bar for a given manager.
+        Args:
+            manager_name: The name of the manager whose bar to hover over.
+            bar_index: The index of the bar to hover over (0-based, default 0 for first bar).
+        """
+        self.hover_locator(
+            self.get_team_distribution_bars_locator(manager_name).nth(bar_index),
+            f"Team Distribution Bar {bar_index} for {manager_name}",
+        )
+
+    def get_team_distribution_tooltip_values(self):
+        """
+        Extracts the values from the team distribution tooltip after it is shown.
+        Returns a dict with keys: 'below_average', 'within_average', 'above_average',
+        each containing percentage (value, color) and count (value, color).
+        """
+        tooltip = self.team_distribution_tooltip
+        rows = tooltip.locator("tbody tr")
+        result = {}
+        label_map = {
+            "Below Average": "below_average",
+            "Within Average": "within_average",
+            "Above Average": "above_average",
+        }
+        for i in range(rows.count()):
+            row = rows.nth(i)
+            label = row.locator("td").nth(0).inner_text().strip()
+            percent_cell = row.locator("td").nth(1)
+            count_cell = row.locator("td").nth(2)
+            percent_value = percent_cell.inner_text().strip()
+            percent_class = percent_cell.get_attribute("class")
+            percent_color = self.class_to_color_name(percent_class)
+            count_value = count_cell.inner_text().strip()
+            count_class = count_cell.get_attribute("class")
+            count_color = self.class_to_color_name(count_class)
+            result[label_map[label]] = {
+                "percentage": {"value": percent_value, "color": percent_color},
+                "count": {"value": count_value, "color": count_color},
+            }
+        return result
 
     def sort_manager_table_by_manager_name(self) -> None:
         """Sort the manager table by manager name."""

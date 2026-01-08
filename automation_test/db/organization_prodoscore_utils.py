@@ -1,6 +1,6 @@
 from typing import List
 
-from automation_test.models.organization_prodoscore import OrganizationProdoscore
+from automation_test.models import OrganizationProdoscore
 
 
 def insert_organization_prodoscore(

@@ -1,127 +1,126 @@
 {
   "test_default_manager_page_view_filters_and_sorting": {
-    "employee_prodoscores": [
-      {
-        "score": 2,
-        "ip_int_ext": 1,
-        "total_gap_time": 210,
-        "total_active_time": 1,
-        "gap_times": "[[0,210]]",
-        "first_last_activity_times": "[-1,-1]"
+    "employee_prodoscores": {
+      "login_user": {
+        "self": {
+          "score": 35
+        },
+        "subordinates": {
+          "user_1": {
+            "score": 80
+          }
+        }
       },
-      {
-        "score": 3,
-        "ip_int_ext": 0,
-        "total_gap_time": 310,
-        "total_active_time": 1,
-        "gap_times": "[[0,310]]",
-        "first_last_activity_times": "[-1,-1]"
+      "main_user": {
+        "self": {
+          "score": 60
+        },
+        "subordinates": {
+          "user_2": {
+            "score": 90
+          }
+        }
       }
-    ]
+    },
+    "organization_prodoscores": {
+      "score": 1
+    }
   },
   "test_only_company_or_team_view_with_subordinates_are_listed_as_managers": {
-    "employee_prodoscores": [
-      {
-        "score": 2,
-        "ip_int_ext": 1,
-        "total_gap_time": 210,
-        "total_active_time": 1,
-        "gap_times": "[[0,210]]",
-        "first_last_activity_times": "[-1,-1]"
+    "employee_prodoscores": {
+      "main_user": {
+        "self": {
+          "score": 35
+        },
+        "subordinates": {
+          "user_3": {
+            "score": 80
+          }
+        }
       },
-      {
-        "score": 3,
-        "ip_int_ext": 0,
-        "total_gap_time": 310,
-        "total_active_time": 1,
-        "gap_times": "[[0,310]]",
-        "first_last_activity_times": "[-1,-1]"
+      "user_1": {
+        "self": {
+          "score": 60
+        },
+        "subordinates": {
+          "user_4": {
+            "score": 90
+          }
+        }
       },
-      {
-        "score": 4,
-        "ip_int_ext": 1,
-        "total_gap_time": 410,
-        "total_active_time": 1,
-        "gap_times": "[[0,410]]",
-        "first_last_activity_times": "[-1,-1]"
+      "user_2": {
+        "self": {
+          "score": 60
+        }
       }
-    ]
+    },
+    "organization_prodoscores": {
+      "score": 1
+    }
   },
   "test_app_users_are_not_listed_as_managers": {
-    "employee_prodoscores": [
-      {
-        "score": 2,
-        "ip_int_ext": 1,
-        "total_gap_time": 210,
-        "total_active_time": 1,
-        "gap_times": "[[0,210]]",
-        "first_last_activity_times": "[-1,-1]"
+    "employee_prodoscores": {
+      "main_user": {
+        "self": {
+          "score": 35
+        },
+        "subordinates": {
+          "user_1": {
+            "score": 80
+          }
+        }
       }
-    ]
+    },
+    "organization_prodoscores": {
+      "score": 1
+    }
   },
   "test_date_range_change_updates_dates_and_resets_pagination": {
     "employee_prodoscores": [
       {
-        "score": 2,
-        "ip_int_ext": 1,
-        "total_gap_time": 210,
-        "total_active_time": 1,
-        "gap_times": "[[0,210]]",
-        "first_last_activity_times": "[-1,-1]"
+        "score": 2
       }
-    ]
+    ],
+    "organization_prodoscores": {
+      "score": 1
+    }
   },
   "test_manager_names_are_displayed_correctly": {
-    "employee_prodoscores": [
-      {
-        "score": 1,
-        "ip_int_ext": 1,
-        "total_gap_time": 210,
-        "total_active_time": 1,
-        "gap_times": "[[0,210]]",
-        "first_last_activity_times": "[-1,-1]"
+    "employee_prodoscores": {
+      "main_user": {
+        "self": {
+          "score": 35
+        },
+        "subordinates": {
+          "user_3": {
+            "score": 80
+          }
+        }
       },
-      {
-        "score": 2,
-        "ip_int_ext": 0,
-        "total_gap_time": 310,
-        "total_active_time": 1,
-        "gap_times": "[[0,310]]",
-        "first_last_activity_times": "[-1,-1]"
+      "user_1": {
+        "self": {
+          "score": 35
+        },
+        "subordinates": {
+          "user_4": {
+            "score": 80
+          }
+        }
       },
-      {
-        "score": 3,
-        "ip_int_ext": 1,
-        "total_gap_time": 410,
-        "total_active_time": 1,
-        "gap_times": "[[0,410]]",
-        "first_last_activity_times": "[-1,-1]"
-      },
-      {
-        "score": 4,
-        "ip_int_ext": 0,
-        "total_gap_time": 510,
-        "total_active_time": 1,
-        "gap_times": "[[0,510]]",
-        "first_last_activity_times": "[-1,-1]"
-      },
-      {
-        "score": 5,
-        "ip_int_ext": 1,
-        "total_gap_time": 610,
-        "total_active_time": 1,
-        "gap_times": "[[0,610]]",
-        "first_last_activity_times": "[-1,-1]"
-      },
-      {
-        "score": 6,
-        "ip_int_ext": 0,
-        "total_gap_time": 710,
-        "total_active_time": 1,
-        "gap_times": "[[0,710]]",
-        "first_last_activity_times": "[-1,-1]"
+      "user_2": {
+        "self": {
+          "score": 35
+        },
+        "subordinates": {
+          "user_5": {
+            "score": 80
+          }
+        }
       }
-    ]
+    },
+    "organization_prodoscores": {
+      "score": 1
+    }
   },
   "test_manager_prodoscore_team_distribution_single_day": {
     "employee_prodoscores": {
@@ -433,6 +432,65 @@
       "day7":{
         "score": 7 
       }
+    }
+  },
+  "test_team_distribution_single_band_all_subordinates_and_no_subordinates_for_some_band": {
+    "employee_prodoscores": {
+      "login_user": {
+        "self": {
+          "score": 35
+        },
+        "subordinates": {
+          "user_1": {
+            "score": 20
+          },
+          "user_2": {
+            "score": 60
+          }
+        }
+      },
+      "main_user": {
+        "self": {
+          "score": 60
+        },
+        "subordinates": {
+          "user_3": {
+            "score": 90
+          },
+          "user_4": {
+            "score": 95
+          },
+          "user_5": {
+            "score": 80
+          }
+        }
+      }
+    },
+    "organization_prodoscores": {
+      "score": 1
+    }
+  },
+  "test_team_distribution_all_bands_subordinates_in_each_band_displayed_correctly": {
+    "employee_prodoscores": {
+      "main_user": {
+        "self": {
+          "score": 60
+        },
+        "subordinates": {
+          "user_1": {
+            "score": 20
+          },
+          "user_2": {
+            "score": 60
+          },
+          "user_3": {
+            "score": 80
+          }
+        }
+      }
+    },
+    "organization_prodoscores": {
+      "score": 1
     }
   }
 }

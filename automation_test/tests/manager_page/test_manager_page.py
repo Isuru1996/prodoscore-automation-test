@@ -25,6 +25,7 @@ from automation_test.utils.date_utils import add_days_to_date
 from automation_test.utils.employee_data_helper import (
     get_average_score,
     get_average_score_without_rounding,
+    get_expected_team_distribution_tooltip,
     get_team_distribution_bars,
     score_to_color,
 )
@@ -72,6 +73,7 @@ class TestManagerPage:
     @pytest.mark.manager_page
     def test_default_manager_page_view_filters_and_sorting(
         self,
+        domain,
         employees,
         manager_page,
         db_client,
@@ -106,24 +108,49 @@ class TestManagerPage:
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
 
-        # Insert employee prodoscore data for user_1 and user_2 using bulk insert
+        # Insert employee prodoscore for all users using bulk insert
         prodoscore_data = test_data.get("employee_prodoscores")
-        employee_prodoscores = [
-            EmployeeProdoscore(
-                domain_id=user.domain_id,
-                employee_id=user.id,
-                date=current_date,
-                role=user.role,
-                score=item.get("score"),
-                ip_int_ext=item.get("ip_int_ext"),
-                total_gap_time=item.get("total_gap_time"),
-                total_active_time=item.get("total_active_time"),
-                gap_times=item.get("gap_times"),
-                first_last_activity_times=item.get("first_last_activity_times"),
-            )
-            for user, item in zip([user_1, user_2], prodoscore_data)
-        ]
+        employee_prodoscores = []
+        for manager_key, manager_data in prodoscore_data.items():
+            # Add manager's own score
+            manager_user = employees.get(manager_key)
+            self_score = manager_data.get("self")
+            if self_score:
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=manager_user.domain_id,
+                        employee_id=manager_user.id,
+                        date=current_date,
+                        role=manager_user.role,
+                        score=self_score["score"],
+                    )
+                )
+            # Add subordinates' scores
+            subordinates = manager_data.get("subordinates", {})
+            for sub_key, sub_score in subordinates.items():
+                sub_user = employees.get(sub_key)
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=sub_user.domain_id,
+                        employee_id=sub_user.id,
+                        date=current_date,
+                        role=sub_user.role,
+                        score=sub_score["score"],
+                    )
+                )
         bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+
+        # Insert organization prodoscore for the domain
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        if organization_prodoscore_data is not None:
+            insert_organization_prodoscore(
+                db_client,
+                OrganizationProdoscore(
+                    domain_id=domain.id,
+                    date=current_date,
+                    score=organization_prodoscore_data["score"],
+                ),
+            )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -187,6 +214,7 @@ class TestManagerPage:
     @pytest.mark.manager_page
     def test_only_company_or_team_view_with_subordinates_are_listed_as_managers(
         self,
+        domain,
         employees,
         manager_page,
         db_client,
@@ -231,24 +259,49 @@ class TestManagerPage:
         user_4.change_role(Role.MANAGER.id)
         user_4.commit(db_client)
 
-        # Insert employee prodoscores data for user_3, user_4 and user_5
+        # Insert employee prodoscore for all users using bulk insert
         prodoscore_data = test_data.get("employee_prodoscores")
-        employee_prodoscores = [
-            EmployeeProdoscore(
-                domain_id=user.domain_id,
-                employee_id=user.id,
-                date=current_date,
-                role=user.role,
-                score=item.get("score"),
-                ip_int_ext=item.get("ip_int_ext"),
-                total_gap_time=item.get("total_gap_time"),
-                total_active_time=item.get("total_active_time"),
-                gap_times=item.get("gap_times"),
-                first_last_activity_times=item.get("first_last_activity_times"),
-            )
-            for user, item in zip([user_3, user_4], prodoscore_data)
-        ]
+        employee_prodoscores = []
+        for manager_key, manager_data in prodoscore_data.items():
+            # Add manager's own score
+            manager_user = employees.get(manager_key)
+            self_score = manager_data.get("self")
+            if self_score:
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=manager_user.domain_id,
+                        employee_id=manager_user.id,
+                        date=current_date,
+                        role=manager_user.role,
+                        score=self_score["score"],
+                    )
+                )
+            # Add subordinates' scores
+            subordinates = manager_data.get("subordinates", {})
+            for sub_key, sub_score in subordinates.items():
+                sub_user = employees.get(sub_key)
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=sub_user.domain_id,
+                        employee_id=sub_user.id,
+                        date=current_date,
+                        role=sub_user.role,
+                        score=sub_score["score"],
+                    )
+                )
         bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+
+        # Insert organization prodoscore for the domain
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        if organization_prodoscore_data is not None:
+            insert_organization_prodoscore(
+                db_client,
+                OrganizationProdoscore(
+                    domain_id=domain.id,
+                    date=current_date,
+                    score=organization_prodoscore_data["score"],
+                ),
+            )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -270,6 +323,7 @@ class TestManagerPage:
     @pytest.mark.manager_page
     def test_app_users_are_not_listed_as_managers(
         self,
+        domain,
         employees,
         manager_page,
         db_client,
@@ -298,23 +352,49 @@ class TestManagerPage:
         user_1.change_role(Role.MANAGER.id)
         user_1.commit(db_client)
 
-        # Insert employee prodoscore data for user_1
+        # Insert employee prodoscore for all users using bulk insert
         prodoscore_data = test_data.get("employee_prodoscores")
-        prodoscore_for_user_1 = EmployeeProdoscore(
-            domain_id=user_1.domain_id,
-            employee_id=user_1.id,
-            date=current_date,
-            role=user_1.role,
-            score=prodoscore_data[0].get("score"),
-            ip_int_ext=prodoscore_data[0].get("ip_int_ext"),
-            total_gap_time=prodoscore_data[0].get("total_gap_time"),
-            total_active_time=prodoscore_data[0].get("total_active_time"),
-            gap_times=prodoscore_data[0].get("gap_times"),
-            first_last_activity_times=prodoscore_data[0].get(
-                "first_last_activity_times"
-            ),
-        )
-        insert_employee_prodoscore(db_client, prodoscore_for_user_1)
+        employee_prodoscores = []
+        for manager_key, manager_data in prodoscore_data.items():
+            # Add manager's own score
+            manager_user = employees.get(manager_key)
+            self_score = manager_data.get("self")
+            if self_score:
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=manager_user.domain_id,
+                        employee_id=manager_user.id,
+                        date=current_date,
+                        role=manager_user.role,
+                        score=self_score["score"],
+                    )
+                )
+            # Add subordinates' scores
+            subordinates = manager_data.get("subordinates", {})
+            for sub_key, sub_score in subordinates.items():
+                sub_user = employees.get(sub_key)
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=sub_user.domain_id,
+                        employee_id=sub_user.id,
+                        date=current_date,
+                        role=sub_user.role,
+                        score=sub_score["score"],
+                    )
+                )
+        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+
+        # Insert organization prodoscore for the domain
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        if organization_prodoscore_data is not None:
+            insert_organization_prodoscore(
+                db_client,
+                OrganizationProdoscore(
+                    domain_id=domain.id,
+                    date=current_date,
+                    score=organization_prodoscore_data["score"],
+                ),
+            )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -330,6 +410,7 @@ class TestManagerPage:
     @pytest.mark.manager_page
     def test_date_range_change_updates_dates_and_resets_pagination(
         self,
+        domain,
         pagination_users,
         manager_page,
         db_client,
@@ -352,18 +433,23 @@ class TestManagerPage:
                     date=current_date,
                     role=user.role,
                     score=score_item.get("score"),
-                    ip_int_ext=score_item.get("ip_int_ext"),
-                    total_gap_time=score_item.get("total_gap_time"),
-                    total_active_time=score_item.get("total_active_time"),
-                    gap_times=score_item.get("gap_times"),
-                    first_last_activity_times=score_item.get(
-                        "first_last_activity_times"
-                    ),
                 )
                 for user in pagination_users
                 if user.id is not None
             ]
             bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+
+        # Insert organization prodoscore for the domain
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        if organization_prodoscore_data is not None:
+            insert_organization_prodoscore(
+                db_client,
+                OrganizationProdoscore(
+                    domain_id=domain.id,
+                    date=current_date,
+                    score=organization_prodoscore_data["score"],
+                ),
+            )
 
         # Update manager IDs for pagination users to ensure they are listed as managers
         set_manager_chain_for_employees(db_client, pagination_users)
@@ -467,6 +553,7 @@ class TestManagerPage:
     @pytest.mark.manager_page
     def test_manager_names_are_displayed_correctly(
         self,
+        domain,
         employees,
         manager_page,
         db_client,
@@ -508,26 +595,49 @@ class TestManagerPage:
         user_5.change_role(Role.MANAGER.id)
         user_5.commit(db_client)
 
-        # Insert employee prodoscore data for user_3, user_4 and user_5 using bulk insert
+        # Insert employee prodoscore for all users using bulk insert
         prodoscore_data = test_data.get("employee_prodoscores")
-        employee_prodoscores = [
-            EmployeeProdoscore(
-                domain_id=user.domain_id,
-                employee_id=user.id,
-                date=current_date,
-                role=user.role,
-                score=item.get("score"),
-                ip_int_ext=item.get("ip_int_ext"),
-                total_gap_time=item.get("total_gap_time"),
-                total_active_time=item.get("total_active_time"),
-                gap_times=item.get("gap_times"),
-                first_last_activity_times=item.get("first_last_activity_times"),
-            )
-            for user, item in zip(
-                [main_user, user_1, user_2, user_3, user_4, user_5], prodoscore_data
-            )
-        ]
+        employee_prodoscores = []
+        for manager_key, manager_data in prodoscore_data.items():
+            # Add manager's own score
+            manager_user = employees.get(manager_key)
+            self_score = manager_data.get("self")
+            if self_score:
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=manager_user.domain_id,
+                        employee_id=manager_user.id,
+                        date=current_date,
+                        role=manager_user.role,
+                        score=self_score["score"],
+                    )
+                )
+            # Add subordinates' scores
+            subordinates = manager_data.get("subordinates", {})
+            for sub_key, sub_score in subordinates.items():
+                sub_user = employees.get(sub_key)
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=sub_user.domain_id,
+                        employee_id=sub_user.id,
+                        date=current_date,
+                        role=sub_user.role,
+                        score=sub_score["score"],
+                    )
+                )
         bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+
+        # Insert organization prodoscore for the domain
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        if organization_prodoscore_data is not None:
+            insert_organization_prodoscore(
+                db_client,
+                OrganizationProdoscore(
+                    domain_id=domain.id,
+                    date=current_date,
+                    score=organization_prodoscore_data["score"],
+                ),
+            )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -642,8 +752,7 @@ class TestManagerPage:
                 )
         bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
 
-        # Insert organization prodoscore for 7 days
-        organization_prodoscores = []
+        # Insert organization prodoscore for the domain
         organization_prodoscore_data = test_data.get("organization_prodoscores")
         if organization_prodoscore_data is not None:
             insert_organization_prodoscore(
@@ -654,7 +763,6 @@ class TestManagerPage:
                     score=organization_prodoscore_data["score"],
                 ),
             )
-        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
 
         # Change from date to current date
         manager_page.change_from_date(current_date)
@@ -725,6 +833,25 @@ class TestManagerPage:
                     f"Team distribution bars mismatch for {employee.full_name}.\n"
                     f"Actual: {actual_team_distribution_bars}\n"
                     f"Expected: {expected_team_distribution_bars}"
+                )
+
+                # Hover the team distribution bar
+                manager_page.hover_team_distribution_bar_by_manager_name(
+                    employee.full_name
+                )
+
+                # Verify tooltip visibility
+                expect(manager_page.team_distribution_tooltip).to_be_visible()
+
+                # Verify tooltip values
+                tooltip_data = manager_page.get_team_distribution_tooltip_values()
+                expected_tooltip_data = get_expected_team_distribution_tooltip(
+                    subordinate_scores
+                )
+                assert tooltip_data == expected_tooltip_data, (
+                    f"Team distribution tooltip data mismatch for {employee.full_name}.\n"
+                    f"Actual: {tooltip_data}\n"
+                    f"Expected: {expected_tooltip_data}"
                 )
 
     @pytest.mark.order(8)
@@ -870,9 +997,7 @@ class TestManagerPage:
                 # For each day, calculate the average subordinate score, then average those for 7 days
                 daily_team_scores = []
                 # Collect each subordinate's scores for the whole week
-                subordinate_weekly_scores = (
-                    {}
-                )  # {subordinate_key: [score_day1, score_day2, ...]}
+                subordinate_weekly_scores = {}
                 for day in day_map.keys():
                     if key in employee_prodoscore_data[day]:
                         subordinates = employee_prodoscore_data[day][key].get(
@@ -929,4 +1054,315 @@ class TestManagerPage:
                     f"Team distribution bars mismatch for {employee.full_name}.\n"
                     f"Actual: {actual_team_distribution_bars}\n"
                     f"Expected: {expected_team_distribution_bars}"
+                )
+
+                # Hover the team distribution bar
+                manager_page.hover_team_distribution_bar_by_manager_name(
+                    employee.full_name
+                )
+
+                # Verify tooltip visibility
+                expect(manager_page.team_distribution_tooltip).to_be_visible()
+
+                # Verify tooltip values
+                tooltip_data = manager_page.get_team_distribution_tooltip_values()
+                expected_tooltip_data = get_expected_team_distribution_tooltip(
+                    subordinate_total_scores_list
+                )
+                assert tooltip_data == expected_tooltip_data, (
+                    f"Team distribution tooltip data mismatch for {employee.full_name}.\n"
+                    f"Actual: {tooltip_data}\n"
+                    f"Expected: {expected_tooltip_data}"
+                )
+
+    @pytest.mark.order(9)
+    @pytest.mark.manager_page
+    def test_team_distribution_single_band_all_subordinates_and_no_subordinates_for_some_band(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user and main user
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        main_user = employees.get(TestUser.MAIN_USER.val)
+
+        # Change role & view status for both users
+        for user in [login_user, main_user]:
+            user.change_role(Role.ADMINISTRATOR.id)
+            user.change_view_status(ViewStatus.COMPANY.val)
+            user.commit(db_client)
+
+        # Get users for subordinates
+        user_1 = employees.get(TestUser.USER_1.val)
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager and role of user_1
+        user_1.change_manager(login_user)
+        user_1.change_role(Role.MANAGER.id)
+        user_1.commit(db_client)
+
+        # Change manager and role of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.commit(db_client)
+
+        # Change manager and role of user_3
+        user_3.change_manager(main_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(main_user)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(main_user)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Insert employee prodoscore for all users using bulk insert
+        prodoscore_data = test_data.get("employee_prodoscores")
+        employee_prodoscores = []
+        for manager_key, manager_data in prodoscore_data.items():
+            # Add manager's own score
+            manager_user = employees.get(manager_key)
+            self_score = manager_data.get("self")
+            if self_score:
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=manager_user.domain_id,
+                        employee_id=manager_user.id,
+                        date=current_date,
+                        role=manager_user.role,
+                        score=self_score["score"],
+                    )
+                )
+            # Add subordinates' scores
+            subordinates = manager_data.get("subordinates", {})
+            for sub_key, sub_score in subordinates.items():
+                sub_user = employees.get(sub_key)
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=sub_user.domain_id,
+                        employee_id=sub_user.id,
+                        date=current_date,
+                        role=sub_user.role,
+                        score=sub_score["score"],
+                    )
+                )
+        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+
+        # Insert organization prodoscore for the domain
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        if organization_prodoscore_data is not None:
+            insert_organization_prodoscore(
+                db_client,
+                OrganizationProdoscore(
+                    domain_id=domain.id,
+                    date=current_date,
+                    score=organization_prodoscore_data["score"],
+                ),
+            )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after change date
+        manager_page.wait_for_manager_table_load()
+
+        # Iterate through each manager and verify their data
+        for key, employee in employees.items():
+            # Get expected data from test data
+            manager_data_expect = prodoscore_data.get(key, {})
+            if "self" in manager_data_expect:
+                # Get data from manager table
+                manager_data = manager_page.get_manager_data(employee.full_name)
+
+                # Subordinates info
+                subordinates = manager_data_expect.get("subordinates", {})
+                subordinate_scores = [sub["score"] for sub in subordinates.values()]
+
+                # Team distribution bars
+                expected_team_distribution_bars: list[dict] = (
+                    get_team_distribution_bars(subordinate_scores)
+                )
+                actual_team_distribution_bars: list[dict] = manager_data.get(
+                    "team_distribution"
+                )
+                assert (
+                    actual_team_distribution_bars == expected_team_distribution_bars
+                ), (
+                    f"Team distribution bars mismatch for {employee.full_name}.\n"
+                    f"Actual: {actual_team_distribution_bars}\n"
+                    f"Expected: {expected_team_distribution_bars}"
+                )
+
+                # Hover the team distribution bar
+                manager_page.hover_team_distribution_bar_by_manager_name(
+                    employee.full_name
+                )
+
+                # Verify tooltip visibility
+                expect(manager_page.team_distribution_tooltip).to_be_visible()
+
+                # Verify tooltip values
+                tooltip_data = manager_page.get_team_distribution_tooltip_values()
+                expected_tooltip_data = get_expected_team_distribution_tooltip(
+                    subordinate_scores
+                )
+                assert tooltip_data == expected_tooltip_data, (
+                    f"Team distribution tooltip data mismatch for {employee.full_name}.\n"
+                    f"Actual: {tooltip_data}\n"
+                    f"Expected: {expected_tooltip_data}"
+                )
+
+    @pytest.mark.order(9)
+    @pytest.mark.manager_page
+    def test_team_distribution_all_bands_subordinates_in_each_band_displayed_correctly(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user and main user
+        main_user = employees.get(TestUser.MAIN_USER.val)
+
+        # Change role & view status for main user
+        main_user.change_role(Role.ADMINISTRATOR.id)
+        main_user.change_view_status(ViewStatus.COMPANY.val)
+        main_user.commit(db_client)
+
+        # Get users for subordinates
+        user_1 = employees.get(TestUser.USER_1.val)
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+
+        # Change manager and role of user_1
+        user_1.change_manager(main_user)
+        user_1.change_role(Role.MANAGER.id)
+        user_1.commit(db_client)
+
+        # Change manager and role of user_2
+        user_2.change_manager(main_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.commit(db_client)
+
+        # Change manager and role of user_3
+        user_3.change_manager(main_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Insert employee prodoscore for all users using bulk insert
+        prodoscore_data = test_data.get("employee_prodoscores")
+        employee_prodoscores = []
+        for manager_key, manager_data in prodoscore_data.items():
+            # Add manager's own score
+            manager_user = employees.get(manager_key)
+            self_score = manager_data.get("self")
+            if self_score:
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=manager_user.domain_id,
+                        employee_id=manager_user.id,
+                        date=current_date,
+                        role=manager_user.role,
+                        score=self_score["score"],
+                    )
+                )
+            # Add subordinates' scores
+            subordinates = manager_data.get("subordinates", {})
+            for sub_key, sub_score in subordinates.items():
+                sub_user = employees.get(sub_key)
+                employee_prodoscores.append(
+                    EmployeeProdoscore(
+                        domain_id=sub_user.domain_id,
+                        employee_id=sub_user.id,
+                        date=current_date,
+                        role=sub_user.role,
+                        score=sub_score["score"],
+                    )
+                )
+        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+
+        # Insert organization prodoscore for the domain
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        if organization_prodoscore_data is not None:
+            insert_organization_prodoscore(
+                db_client,
+                OrganizationProdoscore(
+                    domain_id=domain.id,
+                    date=current_date,
+                    score=organization_prodoscore_data["score"],
+                ),
+            )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after change date
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Iterate through each manager and verify their data
+        for key, employee in employees.items():
+            # Get expected data from test data
+            manager_data_expect = prodoscore_data.get(key, {})
+            if "self" in manager_data_expect:
+                # Get data from manager table
+                manager_data = manager_page.get_manager_data(employee.full_name)
+
+                # Subordinates info
+                subordinates = manager_data_expect.get("subordinates", {})
+                subordinate_scores = [sub["score"] for sub in subordinates.values()]
+
+                # Team distribution bars
+                expected_team_distribution_bars: list[dict] = (
+                    get_team_distribution_bars(subordinate_scores)
+                )
+                actual_team_distribution_bars: list[dict] = manager_data.get(
+                    "team_distribution"
+                )
+                assert (
+                    actual_team_distribution_bars == expected_team_distribution_bars
+                ), (
+                    f"Team distribution bars mismatch for {employee.full_name}.\n"
+                    f"Actual: {actual_team_distribution_bars}\n"
+                    f"Expected: {expected_team_distribution_bars}"
+                )
+
+                # Hover the team distribution bar
+                manager_page.hover_team_distribution_bar_by_manager_name(
+                    employee.full_name
+                )
+
+                # Verify tooltip visibility
+                expect(manager_page.team_distribution_tooltip).to_be_visible()
+
+                # Verify tooltip values
+                tooltip_data = manager_page.get_team_distribution_tooltip_values()
+                expected_tooltip_data = get_expected_team_distribution_tooltip(
+                    subordinate_scores
+                )
+                assert tooltip_data == expected_tooltip_data, (
+                    f"Team distribution tooltip data mismatch for {employee.full_name}.\n"
+                    f"Actual: {tooltip_data}\n"
+                    f"Expected: {expected_tooltip_data}"
                 )
