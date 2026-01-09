@@ -441,7 +441,7 @@ class ManagerPage(BasePage):
         team_distribution_bars.sort(key=lambda x: color_order.get(x["color"], 99))
 
         # Percent change value, color, and arrow type (from svg class)
-        percent_change_div = tds.nth(4).locator("div")
+        percent_change_div = tds.nth(4).locator("div:has(p)")
         percent_change_svg = percent_change_div.locator("svg")
         percent_change_arrow_type = None
         if percent_change_svg.count() > 0:

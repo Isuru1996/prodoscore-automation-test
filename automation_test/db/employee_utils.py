@@ -97,6 +97,17 @@ def update_employees_default(db_client, domain_id, login_id):
     sql = f"UPDATE proapp_employee SET {set_clause} WHERE domain_id = %s AND id != %s"
     db_client.execute_update(sql, tuple(values + [domain_id, login_id]))
 
+    # Also update the login user's role, status, and view_status
+    login_update = {
+        "role": 15000,
+        "status": 1,
+        "view_status": 3,
+    }
+    login_set_clause = ", ".join(f"{k} = %s" for k in login_update)
+    login_values = list(login_update.values())
+    login_sql = f"UPDATE proapp_employee SET {login_set_clause} WHERE id = %s"
+    db_client.execute_update(login_sql, tuple(login_values + [login_id]))
+
 
 def add_test_employees(
     db_client,

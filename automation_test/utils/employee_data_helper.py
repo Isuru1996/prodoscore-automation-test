@@ -145,7 +145,7 @@ def calculate_percent_change(prev_week_avg, curr_week_avg):
         color = "red"
         arrow_type = "arrow-down"
     else:
-        color = "gray"
+        color = "black"
         arrow_type = None
     return {
         "value": f"{abs(percent_int)}%",
