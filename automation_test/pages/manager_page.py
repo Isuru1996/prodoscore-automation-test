@@ -29,6 +29,9 @@ class ManagerPage(BasePage):
             "bg-ds-gray-800": "gray",
             "bg-warning-100": "yellow",
             "bg-success-100": "green",
+            "text-primary-blue": "blue",
+            "text-primary-red": "red",
+            "text-primary-gray": "gray",
             # Add more mappings as needed
         }
         for cls in class_str.split():
@@ -414,7 +417,7 @@ class ManagerPage(BasePage):
         )
 
     def get_manager_data(self, manager_name: str):
-        """Get prodoscore, team distribution, and percent change values and colors for a specific manager."""
+        """Get prodoscore, team distribution, and percent change values and colors for a specific manager, including arrow type in percent change."""
         row = self._get_manager_row(manager_name)
         tds = row.locator("td")
 
@@ -437,11 +440,15 @@ class ManagerPage(BasePage):
         color_order = {"red": 0, "gray": 1, "blue": 2}
         team_distribution_bars.sort(key=lambda x: color_order.get(x["color"], 99))
 
-        # Percent change value and color (from class)
+        # Percent change value, color, and arrow type (from svg class)
         percent_change_div = tds.nth(4).locator("div")
+        percent_change_svg = percent_change_div.locator("svg")
+        percent_change_arrow_type = None
+        if percent_change_svg.count() > 0:
+            percent_change_arrow_type = percent_change_svg.get_attribute("data-icon")
         percent_change_p = percent_change_div.locator("p")
         percent_change = percent_change_p.inner_text()
-        percent_change_class = percent_change_p.get_attribute("class")
+        percent_change_class = percent_change_div.get_attribute("class")
         percent_change_color = self.class_to_color_name(percent_change_class)
 
         # Direct team prodoscore value and color (from class)
@@ -459,7 +466,11 @@ class ManagerPage(BasePage):
                 "score": int(direct_team_prodoscore),
                 "color": direct_team_prodoscore_color,
             },
-            "percent_change": {"value": percent_change, "color": percent_change_color},
+            "percent_change": {
+                "value": percent_change,
+                "color": percent_change_color,
+                "arrow_type": percent_change_arrow_type,
+            },
         }
 
     def get_team_distribution_bars_locator(self, manager_name: str):

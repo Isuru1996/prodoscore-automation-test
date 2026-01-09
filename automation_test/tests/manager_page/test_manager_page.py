@@ -8,7 +8,6 @@ from automation_test.constants.enums import IsAppUser, Role, TestUser, ViewStatu
 from automation_test.constants.enums.employee_status import EmployeeStatus
 from automation_test.db.employee_prodoscore_utils import (
     bulk_insert_employee_prodoscores,
-    insert_employee_prodoscore,
 )
 from automation_test.db.employee_utils import (
     add_test_employees,
@@ -23,6 +22,7 @@ from automation_test.db.organization_prodoscore_utils import (
 from automation_test.models import Employee, EmployeeProdoscore, OrganizationProdoscore
 from automation_test.utils.date_utils import add_days_to_date
 from automation_test.utils.employee_data_helper import (
+    calculate_percent_change,
     get_average_score,
     get_average_score_without_rounding,
     get_expected_team_distribution_tooltip,
@@ -1830,3 +1830,419 @@ class TestManagerPage:
                     f"Actual: {actual_team_prodoscore_color}\n"
                     f"Expected: {expected_team_prodoscore_color}"
                 )
+
+    @pytest.mark.order(14)
+    @pytest.mark.manager_page
+    def test_percentage_change_single_day_display(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user and main user
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        main_user = employees.get(TestUser.MAIN_USER.val)
+
+        # Change role & view status for both users
+        for user in [login_user, main_user]:
+            user.change_role(Role.ADMINISTRATOR.id)
+            user.change_view_status(ViewStatus.COMPANY.val)
+            user.commit(db_client)
+
+        # Get user_1 and user_2
+        user_1 = employees.get(TestUser.USER_1.val)
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager and role of user_2
+        user_1.change_manager(login_user)
+        user_1.change_role(Role.MANAGER.id)
+        user_1.commit(db_client)
+
+        # Change manager and role of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.commit(db_client)
+
+        # Change manager and role of user_3
+        user_3.change_manager(main_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(main_user)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(main_user)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of day keys to only current date and previous week date
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = {}
+        for week_key, week_data in employee_prodoscore_data.items():
+            day_map[week_key] = {}
+            for day_key in week_data.keys():
+                day_num = int(day_key.replace("day", ""))
+                if week_key == "current_week":
+                    # current week: day1 = current_date - 6, day2 = current_date - 5, ...
+                    day_map[week_key][day_key] = add_days_to_date(
+                        current_date, -(7 - day_num)
+                    )
+                elif week_key == "previous_week":
+                    # previous week: day1 = current_date - 13, day2 = current_date - 12, ...
+                    day_map[week_key][day_key] = add_days_to_date(
+                        current_date, -(14 - day_num)
+                    )
+
+        # Insert employee prodoscores for all users for all days in both weeks
+        employee_prodoscores = []
+        for week_key, week_days in day_map.items():
+            for day_key, date_str in week_days.items():
+                # Get the prodoscore data for this week and day
+                day_data = employee_prodoscore_data.get(week_key, {}).get(day_key, {})
+                for manager_key, manager_data in day_data.items():
+                    manager_user = employees.get(manager_key)
+                    # Manager's own score
+                    self_score = manager_data.get("self")
+                    if self_score:
+                        employee_prodoscores.append(
+                            EmployeeProdoscore(
+                                domain_id=manager_user.domain_id,
+                                employee_id=manager_user.id,
+                                date=date_str,
+                                role=manager_user.role,
+                                score=self_score["score"],
+                            )
+                        )
+                    # Subordinates' scores
+                    for sub_key, sub_score in manager_data.get(
+                        "subordinates", {}
+                    ).items():
+                        sub_user = employees.get(sub_key)
+                        employee_prodoscores.append(
+                            EmployeeProdoscore(
+                                domain_id=sub_user.domain_id,
+                                employee_id=sub_user.id,
+                                date=date_str,
+                                role=sub_user.role,
+                                score=sub_score["score"],
+                            )
+                        )
+        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+
+        # Insert organization prodoscore for all days in both weeks
+        organization_prodoscores = []
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        for week_key, week_days in day_map.items():
+            for day_key, date_str in week_days.items():
+                org_prodoscore_value = organization_prodoscore_data.get(
+                    week_key, {}
+                ).get(day_key)
+                if org_prodoscore_value is not None:
+                    organization_prodoscores.append(
+                        OrganizationProdoscore(
+                            domain_id=domain.id,
+                            date=date_str,
+                            score=org_prodoscore_value["score"],
+                        )
+                    )
+        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_load()
+
+        # Iterate through each manager and verify their data
+        for key, employee in employees.items():
+            # Only process users who have a 'self' score in the test data for at least one week/day
+            has_self_score = False
+            for week_key in ("previous_week", "current_week"):
+                for day_key in day_map.get(week_key, {}):
+                    self_score = (
+                        employee_prodoscore_data.get(week_key, {})
+                        .get(day_key, {})
+                        .get(key, {})
+                        .get("self")
+                    )
+                    if self_score is not None:
+                        has_self_score = True
+                        break
+                if has_self_score:
+                    break
+            if not has_self_score:
+                continue
+
+            # Get actual manager data from the page
+            manager_data = manager_page.get_manager_data(employee.full_name)
+
+            prev_week_scores = []
+            curr_week_scores = []
+
+            # Previous week: add daily average subordinate score
+            for day_key in day_map.get("previous_week", {}).keys():
+                subordinates = (
+                    employee_prodoscore_data.get("previous_week", {})
+                    .get(day_key, {})
+                    .get(key, {})
+                    .get("subordinates", {})
+                )
+                scores = [sub["score"] for sub in subordinates.values()]
+                if scores:
+                    prev_week_scores.append(get_average_score_without_rounding(scores))
+
+            # Current week: add daily average subordinate score
+            for day_key in day_map.get("current_week", {}).keys():
+                subordinates = (
+                    employee_prodoscore_data.get("current_week", {})
+                    .get(day_key, {})
+                    .get(key, {})
+                    .get("subordinates", {})
+                )
+                scores = [sub["score"] for sub in subordinates.values()]
+                if scores:
+                    curr_week_scores.append(get_average_score_without_rounding(scores))
+
+            # Calculate averages
+            prev_week_avg = (
+                get_average_score_without_rounding(prev_week_scores)
+                if prev_week_scores
+                else None
+            )
+            curr_week_avg = (
+                get_average_score_without_rounding(curr_week_scores)
+                if curr_week_scores
+                else None
+            )
+
+            expected_percentage_change = calculate_percent_change(
+                prev_week_avg, curr_week_avg
+            )
+            actual_percentage_change = manager_data.get("percent_change")
+
+            assert actual_percentage_change == expected_percentage_change, (
+                f"Percentage change mismatch for {employee.full_name}.\n"
+                f"Actual: {actual_percentage_change}\n"
+                f"Expected: {expected_percentage_change}"
+            )
+
+    @pytest.mark.order(15)
+    @pytest.mark.manager_page
+    def test_weekly_percentage_change_display(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user and main user
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        main_user = employees.get(TestUser.MAIN_USER.val)
+
+        # Change role & view status for both users
+        for user in [login_user, main_user]:
+            user.change_role(Role.ADMINISTRATOR.id)
+            user.change_view_status(ViewStatus.COMPANY.val)
+            user.commit(db_client)
+
+        # Get user_1 and user_2
+        user_1 = employees.get(TestUser.USER_1.val)
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager and role of user_2
+        user_1.change_manager(login_user)
+        user_1.change_role(Role.MANAGER.id)
+        user_1.commit(db_client)
+
+        # Change manager and role of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.commit(db_client)
+
+        # Change manager and role of user_3
+        user_3.change_manager(main_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(main_user)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(main_user)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of day keys to only current date and previous week date
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = {}
+        for week_key, week_data in employee_prodoscore_data.items():
+            day_map[week_key] = {}
+            for day_key in week_data.keys():
+                day_num = int(day_key.replace("day", ""))
+                if week_key == "current_week":
+                    # current week: day1 = current_date - 6, day2 = current_date - 5, ...
+                    day_map[week_key][day_key] = add_days_to_date(
+                        current_date, -(7 - day_num)
+                    )
+                elif week_key == "previous_week":
+                    # previous week: day1 = current_date - 13, day2 = current_date - 12, ...
+                    day_map[week_key][day_key] = add_days_to_date(
+                        current_date, -(14 - day_num)
+                    )
+
+        # Insert employee prodoscores for all users for all days in both weeks
+        employee_prodoscores = []
+        for week_key, week_days in day_map.items():
+            for day_key, date_str in week_days.items():
+                # Get the prodoscore data for this week and day
+                day_data = employee_prodoscore_data.get(week_key, {}).get(day_key, {})
+                for manager_key, manager_data in day_data.items():
+                    manager_user = employees.get(manager_key)
+                    # Manager's own score
+                    self_score = manager_data.get("self")
+                    if self_score:
+                        employee_prodoscores.append(
+                            EmployeeProdoscore(
+                                domain_id=manager_user.domain_id,
+                                employee_id=manager_user.id,
+                                date=date_str,
+                                role=manager_user.role,
+                                score=self_score["score"],
+                            )
+                        )
+                    # Subordinates' scores
+                    for sub_key, sub_score in manager_data.get(
+                        "subordinates", {}
+                    ).items():
+                        sub_user = employees.get(sub_key)
+                        employee_prodoscores.append(
+                            EmployeeProdoscore(
+                                domain_id=sub_user.domain_id,
+                                employee_id=sub_user.id,
+                                date=date_str,
+                                role=sub_user.role,
+                                score=sub_score["score"],
+                            )
+                        )
+        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+
+        # Insert organization prodoscore for all days in both weeks
+        organization_prodoscores = []
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        for week_key, week_days in day_map.items():
+            for day_key, date_str in week_days.items():
+                org_prodoscore_value = organization_prodoscore_data.get(
+                    week_key, {}
+                ).get(day_key)
+                if org_prodoscore_value is not None:
+                    organization_prodoscores.append(
+                        OrganizationProdoscore(
+                            domain_id=domain.id,
+                            date=date_str,
+                            score=org_prodoscore_value["score"],
+                        )
+                    )
+        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_load()
+
+        # Iterate through each manager and verify their data
+        for key, employee in employees.items():
+            # Only process users who have a 'self' score in the test data for at least one week/day
+            has_self_score = False
+            for week_key in ("previous_week", "current_week"):
+                for day_key in day_map.get(week_key, {}):
+                    self_score = (
+                        employee_prodoscore_data.get(week_key, {})
+                        .get(day_key, {})
+                        .get(key, {})
+                        .get("self")
+                    )
+                    if self_score is not None:
+                        has_self_score = True
+                        break
+                if has_self_score:
+                    break
+            if not has_self_score:
+                continue
+
+            # Get actual manager data from the page
+            manager_data = manager_page.get_manager_data(employee.full_name)
+
+            prev_week_scores = []
+            curr_week_scores = []
+
+            # Previous week: add daily average subordinate score
+            for day_key in day_map.get("previous_week", {}).keys():
+                subordinates = (
+                    employee_prodoscore_data.get("previous_week", {})
+                    .get(day_key, {})
+                    .get(key, {})
+                    .get("subordinates", {})
+                )
+                scores = [sub["score"] for sub in subordinates.values()]
+                if scores:
+                    prev_week_scores.append(get_average_score_without_rounding(scores))
+
+            # Current week: add daily average subordinate score
+            for day_key in day_map.get("current_week", {}).keys():
+                subordinates = (
+                    employee_prodoscore_data.get("current_week", {})
+                    .get(day_key, {})
+                    .get(key, {})
+                    .get("subordinates", {})
+                )
+                scores = [sub["score"] for sub in subordinates.values()]
+                if scores:
+                    curr_week_scores.append(get_average_score_without_rounding(scores))
+
+            # Calculate averages
+            prev_week_avg = (
+                get_average_score_without_rounding(prev_week_scores)
+                if prev_week_scores
+                else None
+            )
+            curr_week_avg = (
+                get_average_score_without_rounding(curr_week_scores)
+                if curr_week_scores
+                else None
+            )
+
+            expected_percentage_change = calculate_percent_change(
+                prev_week_avg, curr_week_avg
+            )
+            actual_percentage_change = manager_data.get("percent_change")
+
+            assert actual_percentage_change == expected_percentage_change, (
+                f"Percentage change mismatch for {employee.full_name}.\n"
+                f"Actual: {actual_percentage_change}\n"
+                f"Expected: {expected_percentage_change}"
+            )

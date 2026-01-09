@@ -8,6 +8,7 @@ from automation_test.db.organization_prodoscore_utils import (
     delete_organization_prodoscore,
 )
 from automation_test.pages import LoginPage
+from automation_test.utils.date_utils import add_days_to_date
 
 
 @pytest.fixture(scope="class", autouse=True, name="dashboard_page")
@@ -30,7 +31,7 @@ def from_date(dashboard_page):
 
 @pytest.fixture(scope="function", autouse=True)
 def delete_database_data(from_date, current_date, domain, employees, db_client):
-    filter_condition_1 = f"date >= '{from_date}' AND date <= '{current_date}' AND domain_id = '{domain.id}'"
+    filter_condition_1 = f"date >= '{add_days_to_date(from_date, -8)}' AND date <= '{current_date}' AND domain_id = '{domain.id}'"
     delete_employee_prodoscore(db_client, filter_condition_1)
     delete_organization_prodoscore(db_client, filter_condition_1)
     delete_organization_holiday(db_client, filter_condition_1)

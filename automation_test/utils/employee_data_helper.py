@@ -115,3 +115,40 @@ def get_expected_team_distribution_tooltip(
             },
         },
     }
+
+
+def calculate_percent_change(prev_week_avg, curr_week_avg):
+    """
+    Calculate percent change between previous and current week averages.
+    Returns a dict with keys: value, color, arrow_type.
+    - value: percent change (rounded down, int, no sign, e.g. 12)
+    - color: 'blue' if increase, 'gray' if zero, 'red' if decrease
+    - arrow_type: 'arrow-up' if increase, 'arrow-down' if decrease, None if zero
+    If prev_week_avg is None or zero, treat as 0 (if both are zero, percent change is 0).
+    """
+    if prev_week_avg is None:
+        prev_week_avg = 0
+    if curr_week_avg is None:
+        curr_week_avg = 0
+    if prev_week_avg == 0:
+        if curr_week_avg == 0:
+            percent = 0
+        else:
+            percent = 100  # treat as 100% increase from 0 to nonzero
+    else:
+        percent = ((curr_week_avg - prev_week_avg) / prev_week_avg) * 100
+    percent_int = round(percent)  # round to nearest integer
+    if percent_int > 0:
+        color = "blue"
+        arrow_type = "arrow-up"
+    elif percent_int < 0:
+        color = "red"
+        arrow_type = "arrow-down"
+    else:
+        color = "gray"
+        arrow_type = None
+    return {
+        "value": f"{abs(percent_int)}%",
+        "color": color,
+        "arrow_type": arrow_type,
+    }
