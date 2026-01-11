@@ -30,6 +30,11 @@ from automation_test.utils.employee_data_helper import (
     get_team_distribution_bars,
     score_to_color,
 )
+from automation_test.utils.testdata_utils import (
+    insert_employee_prodoscores_from_testdata,
+    insert_organization_prodoscores_from_testdata,
+    map_day_keys_to_dates,
+)
 
 
 @pytest.fixture(scope="class", name="manager_page")
@@ -1133,49 +1138,20 @@ class TestManagerPage:
         user_5.change_role(Role.MANAGER.id)
         user_5.commit(db_client)
 
-        # Insert employee prodoscore for all users using bulk insert
-        prodoscore_data = test_data.get("employee_prodoscores")
-        employee_prodoscores = []
-        for manager_key, manager_data in prodoscore_data.items():
-            # Add manager's own score
-            manager_user = employees.get(manager_key)
-            self_score = manager_data.get("self")
-            if self_score:
-                employee_prodoscores.append(
-                    EmployeeProdoscore(
-                        domain_id=manager_user.domain_id,
-                        employee_id=manager_user.id,
-                        date=current_date,
-                        role=manager_user.role,
-                        score=self_score["score"],
-                    )
-                )
-            # Add subordinates' scores
-            subordinates = manager_data.get("subordinates", {})
-            for sub_key, sub_score in subordinates.items():
-                sub_user = employees.get(sub_key)
-                employee_prodoscores.append(
-                    EmployeeProdoscore(
-                        domain_id=sub_user.domain_id,
-                        employee_id=sub_user.id,
-                        date=current_date,
-                        role=sub_user.role,
-                        score=sub_score["score"],
-                    )
-                )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert organization prodoscore for the domain
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        if organization_prodoscore_data is not None:
-            insert_organization_prodoscore(
-                db_client,
-                OrganizationProdoscore(
-                    domain_id=domain.id,
-                    date=current_date,
-                    score=organization_prodoscore_data["score"],
-                ),
-            )
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -1185,49 +1161,88 @@ class TestManagerPage:
 
         # Iterate through each manager and verify their data
         for key, employee in employees.items():
-            # Get expected data from test data
-            manager_data_expect = prodoscore_data.get(key, {})
-            if "self" in manager_data_expect:
-                # Get data from manager table
-                manager_data = manager_page.get_manager_data(employee.full_name)
+            prev_self_scores = [
+                employee_prodoscore_data.get("previous_week", {})
+                .get(day_key, {})
+                .get(key, {})
+                .get("self", {})
+                .get("score")
+                for day_key in day_map.get("previous_week", {})
+            ]
+            curr_self_scores = [
+                employee_prodoscore_data.get("current_week", {})
+                .get(day_key, {})
+                .get(key, {})
+                .get("self", {})
+                .get("score")
+                for day_key in day_map.get("current_week", {})
+            ]
+            if not any(prev_self_scores) and not any(curr_self_scores):
+                continue
 
-                # Subordinates info
-                subordinates = manager_data_expect.get("subordinates", {})
-                subordinate_scores = [sub["score"] for sub in subordinates.values()]
+            # Get actual manager data from the page
+            manager_data = manager_page.get_manager_data(employee.full_name)
 
-                # Team distribution bars
-                expected_team_distribution_bars: list[dict] = (
-                    get_team_distribution_bars(subordinate_scores)
+            # Collect each subordinate's total score for current week
+            subordinate_avg_scores = []
+            # Collect all unique subordinate keys for this manager across all days in current week
+            subordinate_keys = set()
+            for day_key in day_map.get("current_week", {}):
+                subordinates = (
+                    employee_prodoscore_data.get("current_week", {})
+                    .get(day_key, {})
+                    .get(key, {})
+                    .get("subordinates", {})
                 )
-                actual_team_distribution_bars: list[dict] = manager_data.get(
-                    "team_distribution"
-                )
-                assert (
-                    actual_team_distribution_bars == expected_team_distribution_bars
-                ), (
-                    f"Team distribution bars mismatch for {employee.full_name}.\n"
-                    f"Actual: {actual_team_distribution_bars}\n"
-                    f"Expected: {expected_team_distribution_bars}"
+                subordinate_keys.update(subordinates.keys())
+
+            for sub_key in subordinate_keys:
+                # Sum all scores for this subordinate across all days in current week
+                sub_score = []
+                for day_key in day_map.get("current_week", {}):
+                    score = (
+                        employee_prodoscore_data.get("current_week", {})
+                        .get(day_key, {})
+                        .get(key, {})
+                        .get("subordinates", {})
+                        .get(sub_key, {})
+                        .get("score")
+                    )
+                    if score is not None:
+                        sub_score.append(score)
+                subordinate_avg_scores.append(
+                    get_average_score_without_rounding(sub_score)
                 )
 
-                # Hover the team distribution bar
-                manager_page.hover_team_distribution_bar_by_manager_name(
-                    employee.full_name
-                )
+            # Team distribution bars
+            expected_team_distribution_bars: list[dict] = get_team_distribution_bars(
+                subordinate_avg_scores
+            )
+            actual_team_distribution_bars: list[dict] = manager_data.get(
+                "team_distribution"
+            )
+            assert actual_team_distribution_bars == expected_team_distribution_bars, (
+                f"Team distribution bars mismatch for {employee.full_name}.\n"
+                f"Actual: {actual_team_distribution_bars}\n"
+                f"Expected: {expected_team_distribution_bars}"
+            )
 
-                # Verify tooltip visibility
-                expect(manager_page.team_distribution_tooltip).to_be_visible()
+            # Hover the team distribution bar
+            manager_page.hover_team_distribution_bar_by_manager_name(employee.full_name)
 
-                # Verify tooltip values
-                tooltip_data = manager_page.get_team_distribution_tooltip_values()
-                expected_tooltip_data = get_expected_team_distribution_tooltip(
-                    subordinate_scores
-                )
-                assert tooltip_data == expected_tooltip_data, (
-                    f"Team distribution tooltip data mismatch for {employee.full_name}.\n"
-                    f"Actual: {tooltip_data}\n"
-                    f"Expected: {expected_tooltip_data}"
-                )
+            # Verify tooltip visibility
+            expect(manager_page.team_distribution_tooltip).to_be_visible()
+
+            # Verify tooltip values
+            tooltip_data = manager_page.get_team_distribution_tooltip_values()
+            expected_tooltip_data = get_expected_team_distribution_tooltip(
+                subordinate_avg_scores
+            )
+            assert tooltip_data == expected_tooltip_data, (
+                f"Team distribution tooltip data mismatch for {employee.full_name}.\n"
+                f"Actual: {tooltip_data}\n"
+                f"Expected: {expected_tooltip_data}"
+            )
 
     @pytest.mark.order(10)
     @pytest.mark.manager_page
@@ -1272,101 +1287,111 @@ class TestManagerPage:
         user_3.change_role(Role.MANAGER.id)
         user_3.commit(db_client)
 
-        # Insert employee prodoscore for all users using bulk insert
-        prodoscore_data = test_data.get("employee_prodoscores")
-        employee_prodoscores = []
-        for manager_key, manager_data in prodoscore_data.items():
-            # Add manager's own score
-            manager_user = employees.get(manager_key)
-            self_score = manager_data.get("self")
-            if self_score:
-                employee_prodoscores.append(
-                    EmployeeProdoscore(
-                        domain_id=manager_user.domain_id,
-                        employee_id=manager_user.id,
-                        date=current_date,
-                        role=manager_user.role,
-                        score=self_score["score"],
-                    )
-                )
-            # Add subordinates' scores
-            subordinates = manager_data.get("subordinates", {})
-            for sub_key, sub_score in subordinates.items():
-                sub_user = employees.get(sub_key)
-                employee_prodoscores.append(
-                    EmployeeProdoscore(
-                        domain_id=sub_user.domain_id,
-                        employee_id=sub_user.id,
-                        date=current_date,
-                        role=sub_user.role,
-                        score=sub_score["score"],
-                    )
-                )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert organization prodoscore for the domain
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        if organization_prodoscore_data is not None:
-            insert_organization_prodoscore(
-                db_client,
-                OrganizationProdoscore(
-                    domain_id=domain.id,
-                    date=current_date,
-                    score=organization_prodoscore_data["score"],
-                ),
-            )
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
 
         # Wait for the manager table to be visible after change date
-        manager_page.wait_for_manager_table_load()
+        manager_page.wait_for_manager_table_loading_complete()
 
         # Iterate through each manager and verify their data
         for key, employee in employees.items():
-            # Get expected data from test data
-            manager_data_expect = prodoscore_data.get(key, {})
-            if "self" in manager_data_expect:
-                # Get data from manager table
-                manager_data = manager_page.get_manager_data(employee.full_name)
+            prev_self_scores = [
+                employee_prodoscore_data.get("previous_week", {})
+                .get(day_key, {})
+                .get(key, {})
+                .get("self", {})
+                .get("score")
+                for day_key in day_map.get("previous_week", {})
+            ]
+            curr_self_scores = [
+                employee_prodoscore_data.get("current_week", {})
+                .get(day_key, {})
+                .get(key, {})
+                .get("self", {})
+                .get("score")
+                for day_key in day_map.get("current_week", {})
+            ]
+            if not any(prev_self_scores) and not any(curr_self_scores):
+                continue
 
-                # Subordinates info
-                subordinates = manager_data_expect.get("subordinates", {})
-                subordinate_scores = [sub["score"] for sub in subordinates.values()]
+            # Get actual manager data from the page
+            manager_data = manager_page.get_manager_data(employee.full_name)
 
-                # Team distribution bars
-                expected_team_distribution_bars: list[dict] = (
-                    get_team_distribution_bars(subordinate_scores)
+            # Collect each subordinate's total score for current week
+            subordinate_avg_scores = []
+            # Collect all unique subordinate keys for this manager across all days in current week
+            subordinate_keys = set()
+            for day_key in day_map.get("current_week", {}):
+                subordinates = (
+                    employee_prodoscore_data.get("current_week", {})
+                    .get(day_key, {})
+                    .get(key, {})
+                    .get("subordinates", {})
                 )
-                actual_team_distribution_bars: list[dict] = manager_data.get(
-                    "team_distribution"
-                )
-                assert (
-                    actual_team_distribution_bars == expected_team_distribution_bars
-                ), (
-                    f"Team distribution bars mismatch for {employee.full_name}.\n"
-                    f"Actual: {actual_team_distribution_bars}\n"
-                    f"Expected: {expected_team_distribution_bars}"
+                subordinate_keys.update(subordinates.keys())
+
+            for sub_key in subordinate_keys:
+                # Sum all scores for this subordinate across all days in current week
+                sub_score = []
+                for day_key in day_map.get("current_week", {}):
+                    score = (
+                        employee_prodoscore_data.get("current_week", {})
+                        .get(day_key, {})
+                        .get(key, {})
+                        .get("subordinates", {})
+                        .get(sub_key, {})
+                        .get("score")
+                    )
+                    if score is not None:
+                        sub_score.append(score)
+                subordinate_avg_scores.append(
+                    get_average_score_without_rounding(sub_score)
                 )
 
-                # Hover the team distribution bar
-                manager_page.hover_team_distribution_bar_by_manager_name(
-                    employee.full_name
-                )
+            # Team distribution bars
+            expected_team_distribution_bars: list[dict] = get_team_distribution_bars(
+                subordinate_avg_scores
+            )
+            actual_team_distribution_bars: list[dict] = manager_data.get(
+                "team_distribution"
+            )
+            assert actual_team_distribution_bars == expected_team_distribution_bars, (
+                f"Team distribution bars mismatch for {employee.full_name}.\n"
+                f"Actual: {actual_team_distribution_bars}\n"
+                f"Expected: {expected_team_distribution_bars}"
+            )
 
-                # Verify tooltip visibility
-                expect(manager_page.team_distribution_tooltip).to_be_visible()
+            # Hover the team distribution bar
+            manager_page.hover_team_distribution_bar_by_manager_name(employee.full_name)
 
-                # Verify tooltip values
-                tooltip_data = manager_page.get_team_distribution_tooltip_values()
-                expected_tooltip_data = get_expected_team_distribution_tooltip(
-                    subordinate_scores
-                )
-                assert tooltip_data == expected_tooltip_data, (
-                    f"Team distribution tooltip data mismatch for {employee.full_name}.\n"
-                    f"Actual: {tooltip_data}\n"
-                    f"Expected: {expected_tooltip_data}"
-                )
+            # Verify tooltip visibility
+            expect(manager_page.team_distribution_tooltip).to_be_visible()
+
+            # Verify tooltip values
+            tooltip_data = manager_page.get_team_distribution_tooltip_values()
+            expected_tooltip_data = get_expected_team_distribution_tooltip(
+                subordinate_avg_scores
+            )
+            assert tooltip_data == expected_tooltip_data, (
+                f"Team distribution tooltip data mismatch for {employee.full_name}.\n"
+                f"Actual: {tooltip_data}\n"
+                f"Expected: {expected_tooltip_data}"
+            )
 
     @pytest.mark.order(11)
     @pytest.mark.manager_page
@@ -1407,49 +1432,20 @@ class TestManagerPage:
         user_3.change_role(Role.MANAGER.id)
         user_3.commit(db_client)
 
-        # Insert employee prodoscore for all users using bulk insert
-        prodoscore_data = test_data.get("employee_prodoscores")
-        employee_prodoscores = []
-        for manager_key, manager_data in prodoscore_data.items():
-            # Add manager's own score
-            manager_user = employees.get(manager_key)
-            self_score = manager_data.get("self")
-            if self_score:
-                employee_prodoscores.append(
-                    EmployeeProdoscore(
-                        domain_id=manager_user.domain_id,
-                        employee_id=manager_user.id,
-                        date=current_date,
-                        role=manager_user.role,
-                        score=self_score["score"],
-                    )
-                )
-            # Add subordinates' scores
-            subordinates = manager_data.get("subordinates", {})
-            for sub_key, sub_score in subordinates.items():
-                sub_user = employees.get(sub_key)
-                employee_prodoscores.append(
-                    EmployeeProdoscore(
-                        domain_id=sub_user.domain_id,
-                        employee_id=sub_user.id,
-                        date=current_date,
-                        role=sub_user.role,
-                        score=sub_score["score"],
-                    )
-                )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert organization prodoscore for the domain
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        if organization_prodoscore_data is not None:
-            insert_organization_prodoscore(
-                db_client,
-                OrganizationProdoscore(
-                    domain_id=domain.id,
-                    date=current_date,
-                    score=organization_prodoscore_data["score"],
-                ),
-            )
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -1459,53 +1455,91 @@ class TestManagerPage:
 
         # Iterate through each manager and verify their data
         for key, employee in employees.items():
-            # Get expected data from test data
-            manager_data_expect = prodoscore_data.get(key, {})
-            if "self" in manager_data_expect:
-                # Get data from manager table
-                manager_data = manager_page.get_manager_data(employee.full_name)
+            prev_self_scores = [
+                employee_prodoscore_data.get("previous_week", {})
+                .get(day_key, {})
+                .get(key, {})
+                .get("self", {})
+                .get("score")
+                for day_key in day_map.get("previous_week", {})
+            ]
+            curr_self_scores = [
+                employee_prodoscore_data.get("current_week", {})
+                .get(day_key, {})
+                .get(key, {})
+                .get("self", {})
+                .get("score")
+                for day_key in day_map.get("current_week", {})
+            ]
+            if not any(prev_self_scores) and not any(curr_self_scores):
+                continue
 
-                # Manager's prodoscore
-                expected_prodoscore = manager_data_expect["self"]["score"]
-                expected_prodoscore_color = score_to_color(expected_prodoscore)
-                actual_prodoscore = manager_data.get("prodoscore").get("score")
-                actual_prodoscore_color = manager_data.get("prodoscore").get("color")
-                assert actual_prodoscore == expected_prodoscore, (
-                    f"Prodoscore mismatch for {employee.full_name}.\n"
-                    f"Actual: {actual_prodoscore}\n"
-                    f"Expected: {expected_prodoscore}"
-                )
-                assert actual_prodoscore_color == expected_prodoscore_color, (
-                    f"Prodoscore color mismatch for {employee.full_name}.\n"
-                    f"Actual: {actual_prodoscore_color}\n"
-                    f"Expected: {expected_prodoscore_color}"
-                )
+            # Get actual manager data from the page
+            manager_data = manager_page.get_manager_data(employee.full_name)
 
-                # Subordinates info
-                subordinates = manager_data_expect.get("subordinates", {})
-                subordinate_scores = [sub["score"] for sub in subordinates.values()]
+            # Validate manager's prodoscore for current week
+            expected_prodoscore = get_average_score(curr_self_scores)
+            expected_prodoscore_color = score_to_color(expected_prodoscore)
+            actual_prodoscore = manager_data.get("prodoscore").get("score")
+            actual_prodoscore_color = manager_data.get("prodoscore").get("color")
+            assert actual_prodoscore == expected_prodoscore, (
+                f"Prodoscore mismatch for {employee.full_name}.\n"
+                f"Actual: {actual_prodoscore}\n"
+                f"Expected: {expected_prodoscore}"
+            )
+            assert actual_prodoscore_color == expected_prodoscore_color, (
+                f"Prodoscore color mismatch for {employee.full_name}.\n"
+                f"Actual: {actual_prodoscore_color}\n"
+                f"Expected: {expected_prodoscore_color}"
+            )
 
-                # Team Prodoscore
-                expected_team_prodoscore = get_average_score(subordinate_scores)
-                expected_team_prodoscore_color = score_to_color(
-                    expected_team_prodoscore
+            # Validate percentage change in team prodoscore
+            prev_week_scores = []
+            curr_week_scores = []
+
+            # Previous week: add daily average subordinate score
+            for day_key in day_map.get("previous_week", {}).keys():
+                subordinates = (
+                    employee_prodoscore_data.get("previous_week", {})
+                    .get(day_key, {})
+                    .get(key, {})
+                    .get("subordinates", {})
                 )
-                actual_team_prodoscore = manager_data.get("direct_team_prodoscore").get(
-                    "score"
+                scores = [sub["score"] for sub in subordinates.values()]
+                if scores:
+                    prev_week_scores.append(get_average_score_without_rounding(scores))
+
+            # Current week: add daily average subordinate score
+            for day_key in day_map.get("current_week", {}).keys():
+                subordinates = (
+                    employee_prodoscore_data.get("current_week", {})
+                    .get(day_key, {})
+                    .get(key, {})
+                    .get("subordinates", {})
                 )
-                actual_team_prodoscore_color = manager_data.get(
-                    "direct_team_prodoscore"
-                ).get("color")
-                assert actual_team_prodoscore == expected_team_prodoscore, (
-                    f"Team Prodoscore mismatch for {employee.full_name}.\n"
-                    f"Actual: {actual_team_prodoscore}\n"
-                    f"Expected: {expected_team_prodoscore}"
-                )
-                assert actual_team_prodoscore_color == expected_team_prodoscore_color, (
-                    f"Team Prodoscore color mismatch for {employee.full_name}.\n"
-                    f"Actual: {actual_team_prodoscore_color}\n"
-                    f"Expected: {expected_team_prodoscore_color}"
-                )
+                scores = [sub["score"] for sub in subordinates.values()]
+                if scores:
+                    curr_week_scores.append(get_average_score_without_rounding(scores))
+
+            # Validate team prodoscore for current week
+            expected_team_prodoscore = get_average_score(curr_week_scores)
+            expected_team_prodoscore_color = score_to_color(expected_team_prodoscore)
+            actual_team_prodoscore = manager_data.get("direct_team_prodoscore").get(
+                "score"
+            )
+            actual_team_prodoscore_color = manager_data.get(
+                "direct_team_prodoscore"
+            ).get("color")
+            assert actual_team_prodoscore == expected_team_prodoscore, (
+                f"Team Prodoscore mismatch for {employee.full_name}.\n"
+                f"Actual: {actual_team_prodoscore}\n"
+                f"Expected: {expected_team_prodoscore}"
+            )
+            assert actual_team_prodoscore_color == expected_team_prodoscore_color, (
+                f"Team Prodoscore color mismatch for {employee.full_name}.\n"
+                f"Actual: {actual_team_prodoscore_color}\n"
+                f"Expected: {expected_team_prodoscore_color}"
+            )
 
     @pytest.mark.order(12)
     @pytest.mark.manager_page
@@ -1546,77 +1580,20 @@ class TestManagerPage:
         user_3.change_role(Role.MANAGER.id)
         user_3.commit(db_client)
 
-        # Create a map of day keys to only current date and previous week date
+        # Create a map of days
         employee_prodoscore_data = test_data.get("employee_prodoscores")
-        day_map = {}
-        for week_key, week_data in employee_prodoscore_data.items():
-            day_map[week_key] = {}
-            for day_key in week_data.keys():
-                day_num = int(day_key.replace("day", ""))
-                if week_key == "current_week":
-                    # current week: day1 = current_date - 6, day2 = current_date - 5, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(7 - day_num)
-                    )
-                elif week_key == "previous_week":
-                    # previous week: day1 = current_date - 13, day2 = current_date - 12, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(14 - day_num)
-                    )
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert employee prodoscores for all users for all days in both weeks
-        employee_prodoscores = []
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                # Get the prodoscore data for this week and day
-                day_data = employee_prodoscore_data.get(week_key, {}).get(day_key, {})
-                for manager_key, manager_data in day_data.items():
-                    manager_user = employees.get(manager_key)
-                    # Manager's own score
-                    self_score = manager_data.get("self")
-                    if self_score:
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=manager_user.domain_id,
-                                employee_id=manager_user.id,
-                                date=date_str,
-                                role=manager_user.role,
-                                score=self_score["score"],
-                            )
-                        )
-                    # Subordinates' scores
-                    for sub_key, sub_score in manager_data.get(
-                        "subordinates", {}
-                    ).items():
-                        sub_user = employees.get(sub_key)
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=sub_user.domain_id,
-                                employee_id=sub_user.id,
-                                date=date_str,
-                                role=sub_user.role,
-                                score=sub_score["score"],
-                            )
-                        )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
 
-        # Insert organization prodoscore for all days in both weeks
-        organization_prodoscores = []
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                org_prodoscore_value = organization_prodoscore_data.get(
-                    week_key, {}
-                ).get(day_key)
-                if org_prodoscore_value is not None:
-                    organization_prodoscores.append(
-                        OrganizationProdoscore(
-                            domain_id=domain.id,
-                            date=date_str,
-                            score=org_prodoscore_value["score"],
-                        )
-                    )
-        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -1769,77 +1746,20 @@ class TestManagerPage:
         user_5.change_role(Role.MANAGER.id)
         user_5.commit(db_client)
 
-        # Create a map of day keys to only current date and previous week date
+        # Create a map of days
         employee_prodoscore_data = test_data.get("employee_prodoscores")
-        day_map = {}
-        for week_key, week_data in employee_prodoscore_data.items():
-            day_map[week_key] = {}
-            for day_key in week_data.keys():
-                day_num = int(day_key.replace("day", ""))
-                if week_key == "current_week":
-                    # current week: day1 = current_date - 6, day2 = current_date - 5, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(7 - day_num)
-                    )
-                elif week_key == "previous_week":
-                    # previous week: day1 = current_date - 13, day2 = current_date - 12, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(14 - day_num)
-                    )
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert employee prodoscores for all users for all days in both weeks
-        employee_prodoscores = []
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                # Get the prodoscore data for this week and day
-                day_data = employee_prodoscore_data.get(week_key, {}).get(day_key, {})
-                for manager_key, manager_data in day_data.items():
-                    manager_user = employees.get(manager_key)
-                    # Manager's own score
-                    self_score = manager_data.get("self")
-                    if self_score:
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=manager_user.domain_id,
-                                employee_id=manager_user.id,
-                                date=date_str,
-                                role=manager_user.role,
-                                score=self_score["score"],
-                            )
-                        )
-                    # Subordinates' scores
-                    for sub_key, sub_score in manager_data.get(
-                        "subordinates", {}
-                    ).items():
-                        sub_user = employees.get(sub_key)
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=sub_user.domain_id,
-                                employee_id=sub_user.id,
-                                date=date_str,
-                                role=sub_user.role,
-                                score=sub_score["score"],
-                            )
-                        )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
 
-        # Insert organization prodoscore for all days in both weeks
-        organization_prodoscores = []
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                org_prodoscore_value = organization_prodoscore_data.get(
-                    week_key, {}
-                ).get(day_key)
-                if org_prodoscore_value is not None:
-                    organization_prodoscores.append(
-                        OrganizationProdoscore(
-                            domain_id=domain.id,
-                            date=date_str,
-                            score=org_prodoscore_value["score"],
-                        )
-                    )
-        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -1992,77 +1912,20 @@ class TestManagerPage:
         user_5.change_role(Role.MANAGER.id)
         user_5.commit(db_client)
 
-        # Create a map of day keys to only current date and previous week date
+        # Create a map of days
         employee_prodoscore_data = test_data.get("employee_prodoscores")
-        day_map = {}
-        for week_key, week_data in employee_prodoscore_data.items():
-            day_map[week_key] = {}
-            for day_key in week_data.keys():
-                day_num = int(day_key.replace("day", ""))
-                if week_key == "current_week":
-                    # current week: day1 = current_date - 6, day2 = current_date - 5, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(7 - day_num)
-                    )
-                elif week_key == "previous_week":
-                    # previous week: day1 = current_date - 13, day2 = current_date - 12, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(14 - day_num)
-                    )
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert employee prodoscores for all users for all days in both weeks
-        employee_prodoscores = []
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                # Get the prodoscore data for this week and day
-                day_data = employee_prodoscore_data.get(week_key, {}).get(day_key, {})
-                for manager_key, manager_data in day_data.items():
-                    manager_user = employees.get(manager_key)
-                    # Manager's own score
-                    self_score = manager_data.get("self")
-                    if self_score:
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=manager_user.domain_id,
-                                employee_id=manager_user.id,
-                                date=date_str,
-                                role=manager_user.role,
-                                score=self_score["score"],
-                            )
-                        )
-                    # Subordinates' scores
-                    for sub_key, sub_score in manager_data.get(
-                        "subordinates", {}
-                    ).items():
-                        sub_user = employees.get(sub_key)
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=sub_user.domain_id,
-                                employee_id=sub_user.id,
-                                date=date_str,
-                                role=sub_user.role,
-                                score=sub_score["score"],
-                            )
-                        )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
 
-        # Insert organization prodoscore for all days in both weeks
-        organization_prodoscores = []
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                org_prodoscore_value = organization_prodoscore_data.get(
-                    week_key, {}
-                ).get(day_key)
-                if org_prodoscore_value is not None:
-                    organization_prodoscores.append(
-                        OrganizationProdoscore(
-                            domain_id=domain.id,
-                            date=date_str,
-                            score=org_prodoscore_value["score"],
-                        )
-                    )
-        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -2200,77 +2063,20 @@ class TestManagerPage:
         user_5.change_role(Role.MANAGER.id)
         user_5.commit(db_client)
 
-        # Create a map of day keys to only current date and previous week date
+        # Create a map of days
         employee_prodoscore_data = test_data.get("employee_prodoscores")
-        day_map = {}
-        for week_key, week_data in employee_prodoscore_data.items():
-            day_map[week_key] = {}
-            for day_key in week_data.keys():
-                day_num = int(day_key.replace("day", ""))
-                if week_key == "current_week":
-                    # current week: day1 = current_date - 6, day2 = current_date - 5, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(7 - day_num)
-                    )
-                elif week_key == "previous_week":
-                    # previous week: day1 = current_date - 13, day2 = current_date - 12, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(14 - day_num)
-                    )
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert employee prodoscores for all users for all days in both weeks
-        employee_prodoscores = []
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                # Get the prodoscore data for this week and day
-                day_data = employee_prodoscore_data.get(week_key, {}).get(day_key, {})
-                for manager_key, manager_data in day_data.items():
-                    manager_user = employees.get(manager_key)
-                    # Manager's own score
-                    self_score = manager_data.get("self")
-                    if self_score:
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=manager_user.domain_id,
-                                employee_id=manager_user.id,
-                                date=date_str,
-                                role=manager_user.role,
-                                score=self_score["score"],
-                            )
-                        )
-                    # Subordinates' scores
-                    for sub_key, sub_score in manager_data.get(
-                        "subordinates", {}
-                    ).items():
-                        sub_user = employees.get(sub_key)
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=sub_user.domain_id,
-                                employee_id=sub_user.id,
-                                date=date_str,
-                                role=sub_user.role,
-                                score=sub_score["score"],
-                            )
-                        )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
 
-        # Insert organization prodoscore for all days in both weeks
-        organization_prodoscores = []
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                org_prodoscore_value = organization_prodoscore_data.get(
-                    week_key, {}
-                ).get(day_key)
-                if org_prodoscore_value is not None:
-                    organization_prodoscores.append(
-                        OrganizationProdoscore(
-                            domain_id=domain.id,
-                            date=date_str,
-                            score=org_prodoscore_value["score"],
-                        )
-                    )
-        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -2409,77 +2215,20 @@ class TestManagerPage:
         user_5.change_role(Role.MANAGER.id)
         user_5.commit(db_client)
 
-        # Create a map of day keys to only current date and previous week date
+        # Create a map of days
         employee_prodoscore_data = test_data.get("employee_prodoscores")
-        day_map = {}
-        for week_key, week_data in employee_prodoscore_data.items():
-            day_map[week_key] = {}
-            for day_key in week_data.keys():
-                day_num = int(day_key.replace("day", ""))
-                if week_key == "current_week":
-                    # current week: day1 = current_date - 6, day2 = current_date - 5, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(7 - day_num)
-                    )
-                elif week_key == "previous_week":
-                    # previous week: day1 = current_date - 13, day2 = current_date - 12, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(14 - day_num)
-                    )
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert employee prodoscores for all users for all days in both weeks
-        employee_prodoscores = []
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                # Get the prodoscore data for this week and day
-                day_data = employee_prodoscore_data.get(week_key, {}).get(day_key, {})
-                for manager_key, manager_data in day_data.items():
-                    manager_user = employees.get(manager_key)
-                    # Manager's own score
-                    self_score = manager_data.get("self")
-                    if self_score:
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=manager_user.domain_id,
-                                employee_id=manager_user.id,
-                                date=date_str,
-                                role=manager_user.role,
-                                score=self_score["score"],
-                            )
-                        )
-                    # Subordinates' scores
-                    for sub_key, sub_score in manager_data.get(
-                        "subordinates", {}
-                    ).items():
-                        sub_user = employees.get(sub_key)
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=sub_user.domain_id,
-                                employee_id=sub_user.id,
-                                date=date_str,
-                                role=sub_user.role,
-                                score=sub_score["score"],
-                            )
-                        )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
 
-        # Insert organization prodoscore for all days in both weeks
-        organization_prodoscores = []
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                org_prodoscore_value = organization_prodoscore_data.get(
-                    week_key, {}
-                ).get(day_key)
-                if org_prodoscore_value is not None:
-                    organization_prodoscores.append(
-                        OrganizationProdoscore(
-                            domain_id=domain.id,
-                            date=date_str,
-                            score=org_prodoscore_value["score"],
-                        )
-                    )
-        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -2568,77 +2317,20 @@ class TestManagerPage:
         user_5.change_status(Status.HIDDEN.val)
         user_5.commit(db_client)
 
-        # Create a map of day keys to only current date and previous week date
+        # Create a map of days
         employee_prodoscore_data = test_data.get("employee_prodoscores")
-        day_map = {}
-        for week_key, week_data in employee_prodoscore_data.items():
-            day_map[week_key] = {}
-            for day_key in week_data.keys():
-                day_num = int(day_key.replace("day", ""))
-                if week_key == "current_week":
-                    # current week: day1 = current_date - 6, day2 = current_date - 5, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(7 - day_num)
-                    )
-                elif week_key == "previous_week":
-                    # previous week: day1 = current_date - 13, day2 = current_date - 12, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(14 - day_num)
-                    )
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert employee prodoscores for all users for all days in both weeks
-        employee_prodoscores = []
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                # Get the prodoscore data for this week and day
-                day_data = employee_prodoscore_data.get(week_key, {}).get(day_key, {})
-                for manager_key, manager_data in day_data.items():
-                    manager_user = employees.get(manager_key)
-                    # Manager's own score
-                    self_score = manager_data.get("self")
-                    if self_score:
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=manager_user.domain_id,
-                                employee_id=manager_user.id,
-                                date=date_str,
-                                role=manager_user.role,
-                                score=self_score["score"],
-                            )
-                        )
-                    # Subordinates' scores
-                    for sub_key, sub_score in manager_data.get(
-                        "subordinates", {}
-                    ).items():
-                        sub_user = employees.get(sub_key)
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=sub_user.domain_id,
-                                employee_id=sub_user.id,
-                                date=date_str,
-                                role=sub_user.role,
-                                score=sub_score["score"],
-                            )
-                        )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
 
-        # Insert organization prodoscore for all days in both weeks
-        organization_prodoscores = []
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                org_prodoscore_value = organization_prodoscore_data.get(
-                    week_key, {}
-                ).get(day_key)
-                if org_prodoscore_value is not None:
-                    organization_prodoscores.append(
-                        OrganizationProdoscore(
-                            domain_id=domain.id,
-                            date=date_str,
-                            score=org_prodoscore_value["score"],
-                        )
-                    )
-        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -2710,77 +2402,20 @@ class TestManagerPage:
         user_3.change_role(Role.MANAGER.id)
         user_3.commit(db_client)
 
-        # Create a map of day keys to only current date and previous week date
+        # Create a map of days
         employee_prodoscore_data = test_data.get("employee_prodoscores")
-        day_map = {}
-        for week_key, week_data in employee_prodoscore_data.items():
-            day_map[week_key] = {}
-            for day_key in week_data.keys():
-                day_num = int(day_key.replace("day", ""))
-                if week_key == "current_week":
-                    # current week: day1 = current_date - 6, day2 = current_date - 5, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(7 - day_num)
-                    )
-                elif week_key == "previous_week":
-                    # previous week: day1 = current_date - 13, day2 = current_date - 12, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(14 - day_num)
-                    )
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert employee prodoscores for all users for all days in both weeks
-        employee_prodoscores = []
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                # Get the prodoscore data for this week and day
-                day_data = employee_prodoscore_data.get(week_key, {}).get(day_key, {})
-                for manager_key, manager_data in day_data.items():
-                    manager_user = employees.get(manager_key)
-                    # Manager's own score
-                    self_score = manager_data.get("self")
-                    if self_score:
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=manager_user.domain_id,
-                                employee_id=manager_user.id,
-                                date=date_str,
-                                role=manager_user.role,
-                                score=self_score["score"],
-                            )
-                        )
-                    # Subordinates' scores
-                    for sub_key, sub_score in manager_data.get(
-                        "subordinates", {}
-                    ).items():
-                        sub_user = employees.get(sub_key)
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=sub_user.domain_id,
-                                employee_id=sub_user.id,
-                                date=date_str,
-                                role=sub_user.role,
-                                score=sub_score["score"],
-                            )
-                        )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
 
-        # Insert organization prodoscore for all days in both weeks
-        organization_prodoscores = []
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                org_prodoscore_value = organization_prodoscore_data.get(
-                    week_key, {}
-                ).get(day_key)
-                if org_prodoscore_value is not None:
-                    organization_prodoscores.append(
-                        OrganizationProdoscore(
-                            domain_id=domain.id,
-                            date=date_str,
-                            score=org_prodoscore_value["score"],
-                        )
-                    )
-        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -2949,77 +2584,20 @@ class TestManagerPage:
         user_4.change_role(Role.MANAGER.id)
         user_4.commit(db_client)
 
-        # Create a map of day keys to only current date and previous week date
+        # Create a map of days
         employee_prodoscore_data = test_data.get("employee_prodoscores")
-        day_map = {}
-        for week_key, week_data in employee_prodoscore_data.items():
-            day_map[week_key] = {}
-            for day_key in week_data.keys():
-                day_num = int(day_key.replace("day", ""))
-                if week_key == "current_week":
-                    # current week: day1 = current_date - 6, day2 = current_date - 5, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(7 - day_num)
-                    )
-                elif week_key == "previous_week":
-                    # previous week: day1 = current_date - 13, day2 = current_date - 12, ...
-                    day_map[week_key][day_key] = add_days_to_date(
-                        current_date, -(14 - day_num)
-                    )
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert employee prodoscores for all users for all days in both weeks
-        employee_prodoscores = []
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                # Get the prodoscore data for this week and day
-                day_data = employee_prodoscore_data.get(week_key, {}).get(day_key, {})
-                for manager_key, manager_data in day_data.items():
-                    manager_user = employees.get(manager_key)
-                    # Manager's own score
-                    self_score = manager_data.get("self")
-                    if self_score:
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=manager_user.domain_id,
-                                employee_id=manager_user.id,
-                                date=date_str,
-                                role=manager_user.role,
-                                score=self_score["score"],
-                            )
-                        )
-                    # Subordinates' scores
-                    for sub_key, sub_score in manager_data.get(
-                        "subordinates", {}
-                    ).items():
-                        sub_user = employees.get(sub_key)
-                        employee_prodoscores.append(
-                            EmployeeProdoscore(
-                                domain_id=sub_user.domain_id,
-                                employee_id=sub_user.id,
-                                date=date_str,
-                                role=sub_user.role,
-                                score=sub_score["score"],
-                            )
-                        )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
 
-        # Insert organization prodoscore for all days in both weeks
-        organization_prodoscores = []
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        for week_key, week_days in day_map.items():
-            for day_key, date_str in week_days.items():
-                org_prodoscore_value = organization_prodoscore_data.get(
-                    week_key, {}
-                ).get(day_key)
-                if org_prodoscore_value is not None:
-                    organization_prodoscores.append(
-                        OrganizationProdoscore(
-                            domain_id=domain.id,
-                            date=date_str,
-                            score=org_prodoscore_value["score"],
-                        )
-                    )
-        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
