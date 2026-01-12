@@ -459,11 +459,15 @@ class ManagerPage(BasePage):
             direct_team_prodoscore_class
         )
 
+        # Handle dash ('-') for prodoscore and direct_team_prodoscore
+        def parse_score(score):
+            return score if score == "-" else int(score)
+
         return {
-            "prodoscore": {"score": int(prodoscore), "color": prodoscore_color},
+            "prodoscore": {"score": parse_score(prodoscore), "color": prodoscore_color},
             "team_distribution": team_distribution_bars,
             "direct_team_prodoscore": {
-                "score": int(direct_team_prodoscore),
+                "score": parse_score(direct_team_prodoscore),
                 "color": direct_team_prodoscore_color,
             },
             "percent_change": {

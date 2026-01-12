@@ -326,6 +326,10 @@ def assert_manager_prodoscore_and_team_prodoscore(
         day_map: Dict mapping week keys to day keys.
     """
     for key, employee in employees.items():
+        # Skip manager if role <= 0
+        if getattr(employee, "role", 1) <= 0:
+            continue
+
         prev_self_scores = [
             employee_prodoscore_data.get("previous_week", {})
             .get(day_key, {})
@@ -374,7 +378,12 @@ def assert_manager_prodoscore_and_team_prodoscore(
                 .get(key, {})
                 .get("subordinates", {})
             )
-            scores = [sub["score"] for sub in subordinates.values()]
+            # Skip subordinates with role <= 0 (get from employees dict)
+            scores = [
+                sub["score"]
+                for sub_id, sub in subordinates.items()
+                if getattr(employees.get(sub_id), "role", 1) > 0
+            ]
             if scores:
                 prev_week_scores.append(get_average_score_without_rounding(scores))
 
@@ -385,31 +394,14 @@ def assert_manager_prodoscore_and_team_prodoscore(
                 .get(key, {})
                 .get("subordinates", {})
             )
-            scores = [sub["score"] for sub in subordinates.values()]
+            # Skip subordinates with role <= 0 (get from employees dict)
+            scores = [
+                sub["score"]
+                for sub_id, sub in subordinates.items()
+                if getattr(employees.get(sub_id), "role", 1) > 0
+            ]
             if scores:
                 curr_week_scores.append(get_average_score_without_rounding(scores))
-
-        # prev_week_avg = (
-        #     get_average_score_without_rounding(prev_week_scores)
-        #     if prev_week_scores
-        #     else None
-        # )
-        # curr_week_avg = (
-        #     get_average_score_without_rounding(curr_week_scores)
-        #     if curr_week_scores
-        #     else None
-        # )
-
-        # expected_percentage_change = calculate_percent_change(
-        #     prev_week_avg, curr_week_avg
-        # )
-        # actual_percentage_change = manager_data.get("percent_change")
-
-        # assert actual_percentage_change == expected_percentage_change, (
-        #     f"Percentage change mismatch for {employee.full_name}.\n"
-        #     f"Actual: {actual_percentage_change}\n"
-        #     f"Expected: {expected_percentage_change}"
-        # )
 
         # Validate team prodoscore for current week
         expected_team_prodoscore = get_average_score(curr_week_scores)
@@ -455,3 +447,86 @@ def assert_manager_table_sorted_and_row_count(manager_page, expected_users):
         f"Actual: {manager_names_in_table}\n"
         f"Expected: {expected_names}"
     )
+
+
+def assert_manager_prodoscore_with_no_score(
+    manager_page, employees, employee_prodoscore_data, employee_holidays_data, day_map
+):
+    """
+    Assert manager prodoscore displays '-' when manager is on holiday for the entire week.
+    Args:
+        manager_page: The page object with table accessors.
+        employees: Dict of employee objects keyed by id.
+        employee_prodoscore_data: Nested dict of prodoscore data.
+        employee_holidays_data: Nested dict of employee holiday data.
+        day_map: Dict mapping week keys to day keys.
+    """
+
+    def is_on_holiday(user_key, week_key, day_key):
+        holidays = (employee_holidays_data or {}).get(week_key, {}).get(user_key, [])
+        return day_key in holidays
+
+    def is_on_holiday_entire_week(user_key, week_key, day_keys):
+        holidays = set(
+            (employee_holidays_data or {}).get(week_key, {}).get(user_key, [])
+        )
+        return set(day_keys) <= holidays and len(day_keys) > 0
+
+    for key, employee in employees.items():
+        prev_week_days = list(day_map.get("previous_week", {}))
+        curr_week_days = list(day_map.get("current_week", {}))
+
+        prev_self_scores = [
+            employee_prodoscore_data.get("previous_week", {})
+            .get(day_key, {})
+            .get(key, {})
+            .get("self", {})
+            .get("score")
+            for day_key in prev_week_days
+            if not is_on_holiday(key, "previous_week", day_key)
+        ]
+        curr_self_scores = [
+            employee_prodoscore_data.get("current_week", {})
+            .get(day_key, {})
+            .get(key, {})
+            .get("self", {})
+            .get("score")
+            for day_key in curr_week_days
+            if not is_on_holiday(key, "current_week", day_key)
+        ]
+
+        # Special scenario: manager is on holiday for the entire week
+        manager_on_holiday_entire_week = is_on_holiday_entire_week(
+            key, "current_week", curr_week_days
+        )
+
+        if (
+            not any(prev_self_scores)
+            and not any(curr_self_scores)
+            and not manager_on_holiday_entire_week
+        ):
+            continue
+
+        manager_data = manager_page.get_manager_data(employee.full_name)
+
+        # If manager is on holiday for the entire week, expect prodoscore to be '-'
+        if manager_on_holiday_entire_week:
+            expected_prodoscore = "-"
+            expected_prodoscore_color = "unknown"
+        else:
+            expected_prodoscore = get_average_score(curr_self_scores)
+            expected_prodoscore_color = score_to_color(expected_prodoscore)
+
+        actual_prodoscore = manager_data.get("prodoscore").get("score")
+        actual_prodoscore_color = manager_data.get("prodoscore").get("color")
+
+        assert actual_prodoscore == expected_prodoscore, (
+            f"Prodoscore mismatch for {employee.full_name}.\n"
+            f"Actual: {actual_prodoscore}\n"
+            f"Expected: {expected_prodoscore}"
+        )
+        assert actual_prodoscore_color == expected_prodoscore_color, (
+            f"Prodoscore color mismatch for {employee.full_name}.\n"
+            f"Actual: {actual_prodoscore_color}\n"
+            f"Expected: {expected_prodoscore_color}"
+        )

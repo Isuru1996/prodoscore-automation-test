@@ -24,6 +24,7 @@ from automation_test.helpers.manager_page_test_utils import (
     assert_hover_and_distribution_bars,
     assert_manager_prodoscore_and_team_prodoscore,
     assert_manager_prodoscore_team_scores_and_percentage_change,
+    assert_manager_prodoscore_with_no_score,
     assert_manager_table_sorted_and_row_count,
     assert_percentage_change,
 )
@@ -38,6 +39,7 @@ from automation_test.utils.employee_data_helper import (
     score_to_color,
 )
 from automation_test.utils.testdata_utils import (
+    insert_employee_holidays_from_testdata,
     insert_employee_prodoscores_from_testdata,
     insert_organization_prodoscores_from_testdata,
     map_day_keys_to_dates,
@@ -919,56 +921,20 @@ class TestManagerPage:
         user_5.change_role(Role.MANAGER.id)
         user_5.commit(db_client)
 
-        # Create a map of day keys to actual dates
-        day_map = {f"day{i+1}": add_days_to_date(current_date, i - 6) for i in range(7)}
-
-        # Insert employee prodoscores for all users for 7 days
-        employee_prodoscores = []
+        # Create a map of days
         employee_prodoscore_data = test_data.get("employee_prodoscores")
-        for day_key, day_data in employee_prodoscore_data.items():
-            date_str = day_map[day_key]
-            for manager_key, manager_data in day_data.items():
-                manager_user = employees.get(manager_key)
-                # Manager's own score
-                self_score = manager_data.get("self")
-                if self_score:
-                    employee_prodoscores.append(
-                        EmployeeProdoscore(
-                            domain_id=manager_user.domain_id,
-                            employee_id=manager_user.id,
-                            date=date_str,
-                            role=manager_user.role,
-                            score=self_score["score"],
-                        )
-                    )
-                # Subordinates' scores
-                for sub_key, sub_score in manager_data.get("subordinates", {}).items():
-                    sub_user = employees.get(sub_key)
-                    employee_prodoscores.append(
-                        EmployeeProdoscore(
-                            domain_id=sub_user.domain_id,
-                            employee_id=sub_user.id,
-                            date=date_str,
-                            role=sub_user.role,
-                            score=sub_score["score"],
-                        )
-                    )
-        bulk_insert_employee_prodoscores(db_client, employee_prodoscores)
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
 
-        # Insert organization prodoscore for 7 days
-        organization_prodoscores = []
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
         organization_prodoscore_data = test_data.get("organization_prodoscores")
-        for day_key, date_str in day_map.items():
-            org_prodoscore_value = organization_prodoscore_data.get(day_key)
-            if org_prodoscore_value is not None:
-                organization_prodoscores.append(
-                    OrganizationProdoscore(
-                        domain_id=domain.id,
-                        date=date_str,
-                        score=org_prodoscore_value["score"],
-                    )
-                )
-        bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
 
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
@@ -1120,6 +1086,7 @@ class TestManagerPage:
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
 
+        # Todo: Need to change view status
         # Change manager and role of user_1
         user_1.change_manager(login_user)
         user_1.change_role(Role.MANAGER.id)
@@ -1239,91 +1206,6 @@ class TestManagerPage:
         assert_hover_and_distribution_bars(
             manager_page, employees, employee_prodoscore_data, day_map
         )
-
-        # # Iterate through each manager and verify their data
-        # for key, employee in employees.items():
-        #     prev_self_scores = [
-        #         employee_prodoscore_data.get("previous_week", {})
-        #         .get(day_key, {})
-        #         .get(key, {})
-        #         .get("self", {})
-        #         .get("score")
-        #         for day_key in day_map.get("previous_week", {})
-        #     ]
-        #     curr_self_scores = [
-        #         employee_prodoscore_data.get("current_week", {})
-        #         .get(day_key, {})
-        #         .get(key, {})
-        #         .get("self", {})
-        #         .get("score")
-        #         for day_key in day_map.get("current_week", {})
-        #     ]
-        #     if not any(prev_self_scores) and not any(curr_self_scores):
-        #         continue
-
-        #     # Get actual manager data from the page
-        #     manager_data = manager_page.get_manager_data(employee.full_name)
-
-        #     # Collect each subordinate's total score for current week
-        #     subordinate_avg_scores = []
-        #     # Collect all unique subordinate keys for this manager across all days in current week
-        #     subordinate_keys = set()
-        #     for day_key in day_map.get("current_week", {}):
-        #         subordinates = (
-        #             employee_prodoscore_data.get("current_week", {})
-        #             .get(day_key, {})
-        #             .get(key, {})
-        #             .get("subordinates", {})
-        #         )
-        #         subordinate_keys.update(subordinates.keys())
-
-        #     for sub_key in subordinate_keys:
-        #         # Sum all scores for this subordinate across all days in current week
-        #         sub_score = []
-        #         for day_key in day_map.get("current_week", {}):
-        #             score = (
-        #                 employee_prodoscore_data.get("current_week", {})
-        #                 .get(day_key, {})
-        #                 .get(key, {})
-        #                 .get("subordinates", {})
-        #                 .get(sub_key, {})
-        #                 .get("score")
-        #             )
-        #             if score is not None:
-        #                 sub_score.append(score)
-        #         subordinate_avg_scores.append(
-        #             get_average_score_without_rounding(sub_score)
-        #         )
-
-        #     # Team distribution bars
-        #     expected_team_distribution_bars: list[dict] = get_team_distribution_bars(
-        #         subordinate_avg_scores
-        #     )
-        #     actual_team_distribution_bars: list[dict] = manager_data.get(
-        #         "team_distribution"
-        #     )
-        #     assert actual_team_distribution_bars == expected_team_distribution_bars, (
-        #         f"Team distribution bars mismatch for {employee.full_name}.\n"
-        #         f"Actual: {actual_team_distribution_bars}\n"
-        #         f"Expected: {expected_team_distribution_bars}"
-        #     )
-
-        #     # Hover the team distribution bar
-        #     manager_page.hover_team_distribution_bar_by_manager_name(employee.full_name)
-
-        #     # Verify tooltip visibility
-        #     expect(manager_page.team_distribution_tooltip).to_be_visible()
-
-        #     # Verify tooltip values
-        #     tooltip_data = manager_page.get_team_distribution_tooltip_values()
-        #     expected_tooltip_data = get_expected_team_distribution_tooltip(
-        #         subordinate_avg_scores
-        #     )
-        #     assert tooltip_data == expected_tooltip_data, (
-        #         f"Team distribution tooltip data mismatch for {employee.full_name}.\n"
-        #         f"Actual: {tooltip_data}\n"
-        #         f"Expected: {expected_tooltip_data}"
-        #     )
 
     @pytest.mark.order(11)
     @pytest.mark.manager_page
@@ -1543,94 +1425,6 @@ class TestManagerPage:
         assert_manager_prodoscore_and_team_prodoscore(
             manager_page, employees, employee_prodoscore_data, day_map
         )
-
-        # # Iterate through each manager and verify their data
-        # for key, employee in employees.items():
-        #     prev_self_scores = [
-        #         employee_prodoscore_data.get("previous_week", {})
-        #         .get(day_key, {})
-        #         .get(key, {})
-        #         .get("self", {})
-        #         .get("score")
-        #         for day_key in day_map.get("previous_week", {})
-        #     ]
-        #     curr_self_scores = [
-        #         employee_prodoscore_data.get("current_week", {})
-        #         .get(day_key, {})
-        #         .get(key, {})
-        #         .get("self", {})
-        #         .get("score")
-        #         for day_key in day_map.get("current_week", {})
-        #     ]
-        #     if not any(prev_self_scores) and not any(curr_self_scores):
-        #         continue
-
-        #     # Get actual manager data from the page
-        #     manager_data = manager_page.get_manager_data(employee.full_name)
-
-        #     # Validate manager's prodoscore for current week
-        #     expected_prodoscore = get_average_score(curr_self_scores)
-        #     expected_prodoscore_color = score_to_color(expected_prodoscore)
-        #     actual_prodoscore = manager_data.get("prodoscore").get("score")
-        #     actual_prodoscore_color = manager_data.get("prodoscore").get("color")
-        #     assert actual_prodoscore == expected_prodoscore, (
-        #         f"Prodoscore mismatch for {employee.full_name}.\n"
-        #         f"Actual: {actual_prodoscore}\n"
-        #         f"Expected: {expected_prodoscore}"
-        #     )
-        #     assert actual_prodoscore_color == expected_prodoscore_color, (
-        #         f"Prodoscore color mismatch for {employee.full_name}.\n"
-        #         f"Actual: {actual_prodoscore_color}\n"
-        #         f"Expected: {expected_prodoscore_color}"
-        #     )
-
-        #     # Validate percentage change in team prodoscore
-        #     prev_week_scores = []
-        #     curr_week_scores = []
-
-        #     # Previous week: add daily average subordinate score
-        #     for day_key in day_map.get("previous_week", {}).keys():
-        #         subordinates = (
-        #             employee_prodoscore_data.get("previous_week", {})
-        #             .get(day_key, {})
-        #             .get(key, {})
-        #             .get("subordinates", {})
-        #         )
-        #         scores = [sub["score"] for sub in subordinates.values()]
-        #         if scores:
-        #             prev_week_scores.append(get_average_score_without_rounding(scores))
-
-        #     # Current week: add daily average subordinate score
-        #     for day_key in day_map.get("current_week", {}).keys():
-        #         subordinates = (
-        #             employee_prodoscore_data.get("current_week", {})
-        #             .get(day_key, {})
-        #             .get(key, {})
-        #             .get("subordinates", {})
-        #         )
-        #         scores = [sub["score"] for sub in subordinates.values()]
-        #         if scores:
-        #             curr_week_scores.append(get_average_score_without_rounding(scores))
-
-        #     # Validate team prodoscore for current week
-        #     expected_team_prodoscore = get_average_score(curr_week_scores)
-        #     expected_team_prodoscore_color = score_to_color(expected_team_prodoscore)
-        #     actual_team_prodoscore = manager_data.get("direct_team_prodoscore").get(
-        #         "score"
-        #     )
-        #     actual_team_prodoscore_color = manager_data.get(
-        #         "direct_team_prodoscore"
-        #     ).get("color")
-        #     assert actual_team_prodoscore == expected_team_prodoscore, (
-        #         f"Team Prodoscore mismatch for {employee.full_name}.\n"
-        #         f"Actual: {actual_team_prodoscore}\n"
-        #         f"Expected: {expected_team_prodoscore}"
-        #     )
-        #     assert actual_team_prodoscore_color == expected_team_prodoscore_color, (
-        #         f"Team Prodoscore color mismatch for {employee.full_name}.\n"
-        #         f"Actual: {actual_team_prodoscore_color}\n"
-        #         f"Expected: {expected_team_prodoscore_color}"
-        #     )
 
     @pytest.mark.order(14)
     @pytest.mark.manager_page
@@ -2115,3 +1909,333 @@ class TestManagerPage:
 
         # Use helper for row count and sorting assertion
         assert_manager_table_sorted_and_row_count(manager_page, [login_user, main_user])
+
+    @pytest.mark.order(20)
+    @pytest.mark.manager_page
+    def test_manager_excluded_when_all_direct_subordinates_on_holiday(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user and main user
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        main_user = employees.get(TestUser.MAIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+
+        # Change role & view status & status for both users
+        for user in [login_user, main_user, user_1]:
+            user.change_role(Role.ADMINISTRATOR.id)
+            user.change_view_status(ViewStatus.COMPANY.val)
+            user.commit(db_client)
+
+        # Get user_1 and user_2
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+
+        # Change manager and role of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.commit(db_client)
+
+        # Change manager and role of user_3
+        user_3.change_manager(main_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_1)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Insert employee holidays from test data
+        holiday_data = test_data.get("employee_holidays")
+        insert_employee_holidays_from_testdata(
+            holiday_data, day_map, employees, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Use helper for row count and sorting assertion
+        assert_manager_table_sorted_and_row_count(manager_page, [login_user, user_1])
+
+    @pytest.mark.order(21)
+    @pytest.mark.manager_page
+    def test_manager_prodoscore_display_dash_when_manager_on_holiday_and_subordinate_visible(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user and main user
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        main_user = employees.get(TestUser.MAIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+
+        # Change role & view status & status for both users
+        for user in [login_user, main_user, user_1]:
+            user.change_role(Role.ADMINISTRATOR.id)
+            user.change_view_status(ViewStatus.COMPANY.val)
+            user.commit(db_client)
+
+        # Get user_1 and user_2
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+
+        # Change manager and role of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.commit(db_client)
+
+        # Change manager and role of user_3
+        user_3.change_manager(main_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_1)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Insert employee holidays from test data
+        holiday_data = test_data.get("employee_holidays")
+        insert_employee_holidays_from_testdata(
+            holiday_data, day_map, employees, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Use helper for row count and sorting assertion
+        assert_manager_prodoscore_with_no_score(
+            manager_page, employees, employee_prodoscore_data, holiday_data, day_map
+        )
+
+    @pytest.mark.order(22)
+    @pytest.mark.manager_page
+    def test_manager_and_subordinate_exclusion_when_terminated(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user and main user
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        main_user = employees.get(TestUser.MAIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+
+        # Change role & view status & status for both users
+        for user in [login_user, main_user, user_1]:
+            user.change_role(Role.ADMINISTRATOR.id)
+            user.change_view_status(ViewStatus.COMPANY.val)
+            user.commit(db_client)
+
+        # Get user_1 and user_2
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager and role of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.commit(db_client)
+
+        # Change manager and role of user_3
+        user_3.change_manager(main_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_1)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_4
+        user_5.change_manager(user_1)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Terminate main user and user_4
+        main_user.change_role(Role.TERMINATED.id)
+        main_user.commit(db_client)
+
+        user_4.change_role(Role.TERMINATED.id)
+        user_4.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Use helper for row count and sorting assertion
+        assert_manager_table_sorted_and_row_count(manager_page, [login_user, user_1])
+
+        # Use helper for row count and sorting assertion
+        assert_manager_prodoscore_and_team_prodoscore(
+            manager_page, employees, employee_prodoscore_data, day_map
+        )
+
+    @pytest.mark.order(23)
+    @pytest.mark.manager_page
+    def test_manager_and_subordinate_exclusion_when_not_activated(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user and main user
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        main_user = employees.get(TestUser.MAIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+
+        # Change role & view status & status for both users
+        for user in [login_user, main_user, user_1]:
+            user.change_role(Role.ADMINISTRATOR.id)
+            user.change_view_status(ViewStatus.COMPANY.val)
+            user.commit(db_client)
+
+        # Get user_1 and user_2
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager and role of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.commit(db_client)
+
+        # Change manager and role of user_3
+        user_3.change_manager(main_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_1)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_4
+        user_5.change_manager(user_1)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Terminate main user and user_4
+        main_user.change_role(Role.NOT_ACTIVATED.id)
+        main_user.commit(db_client)
+
+        user_4.change_role(Role.NOT_ACTIVATED.id)
+        user_4.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Use helper for row count and sorting assertion
+        assert_manager_table_sorted_and_row_count(manager_page, [login_user, user_1])
+
+        # Use helper for row count and sorting assertion
+        assert_manager_prodoscore_and_team_prodoscore(
+            manager_page, employees, employee_prodoscore_data, day_map
+        )

@@ -1,15 +1,19 @@
+from automation_test.db.employee_holiday_utils import bulk_insert_employee_holidays
 from automation_test.db.employee_prodoscore_utils import (
     bulk_insert_employee_prodoscores,
 )
 from automation_test.db.organization_prodoscore_utils import (
     bulk_insert_organization_prodoscores,
-    insert_organization_prodoscore,
 )
-from automation_test.models import Employee, EmployeeProdoscore, OrganizationProdoscore
+from automation_test.models import (
+    EmployeeHoliday,
+    EmployeeProdoscore,
+    OrganizationProdoscore,
+)
 from automation_test.utils.date_utils import add_days_to_date
 
 
-# Common step 1: Map day keys to dates
+# Map day keys to dates
 def map_day_keys_to_dates(employee_prodoscore_data, current_date):
     day_map = {}
     for week_key, week_data in employee_prodoscore_data.items():
@@ -81,3 +85,26 @@ def insert_organization_prodoscores_from_testdata(
                     )
                 )
     bulk_insert_organization_prodoscores(db_client, organization_prodoscores)
+
+
+# Insert employee holidays from test data
+def insert_employee_holidays_from_testdata(
+    employee_holidays_data, day_map, employees, db_client
+):
+    employee_holidays = []
+    for week_key, users in (employee_holidays_data or {}).items():
+        week_days = day_map.get(week_key, {})
+        for emp_key, days in users.items():
+            emp = employees.get(emp_key)
+            for day_key in days:
+                date_str = week_days.get(day_key)
+                if emp and date_str:
+                    employee_holidays.append(
+                        EmployeeHoliday(
+                            domain_id=emp.domain_id,
+                            employee_id=emp.id,
+                            date=date_str,
+                        )
+                    )
+    if employee_holidays:
+        bulk_insert_employee_holidays(db_client, employee_holidays)
