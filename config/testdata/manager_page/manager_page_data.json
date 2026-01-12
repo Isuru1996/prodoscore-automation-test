@@ -124,42 +124,50 @@
   },
   "test_manager_prodoscore_team_distribution_single_day": {
     "employee_prodoscores": {
-      "login_user": {
-        "self": {
-          "score": 35
-        },
-        "subordinates": {
-          "user_2": {
-            "score": 80
-          }
-        }
-      },
-      "main_user": {
-        "self": {
-          "score": 60
-        },
-        "subordinates": {
-          "user_3": {
-            "score": 90
+      "current_week": {
+        "day7": {
+          "login_user": {
+            "self": {
+              "score": 35
+            },
+            "subordinates": {
+              "user_2": {
+                "score": 80
+              }
+            }
           },
-          "user_4": {
-            "score": 20
-          }
-        }
-      },
-      "user_1": {
-        "self": {
-          "score": 80
-        },
-        "subordinates": {
-          "user_5": {
-            "score": 35
+          "main_user": {
+            "self": {
+              "score": 60
+            },
+            "subordinates": {
+              "user_3": {
+                "score": 90
+              },
+              "user_4": {
+                "score": 20
+              }
+            }
+          },
+          "user_1": {
+            "self": {
+              "score": 80
+            },
+            "subordinates": {
+              "user_5": {
+                "score": 35
+              }
+            }
           }
         }
       }
     },
     "organization_prodoscores": {
-      "score": 1
+      "current_week": {
+        "day7": {
+          "score": 1
+        }
+      }
     }
   },
   "test_manager_prodoscore_team_distribution_seven_days": {
