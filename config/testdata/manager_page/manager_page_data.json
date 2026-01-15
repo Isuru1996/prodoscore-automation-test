@@ -1,78 +1,102 @@
 {
   "test_default_manager_page_view_filters_and_sorting": {
     "employee_prodoscores": {
-      "login_user": {
-        "self": {
-          "score": 35
-        },
-        "subordinates": {
-          "user_1": {
-            "score": 80
-          }
-        }
-      },
-      "main_user": {
-        "self": {
-          "score": 60
-        },
-        "subordinates": {
-          "user_2": {
-            "score": 90
+      "current_week": {
+        "day7": {
+          "login_user": {
+            "self": {
+              "score": 35
+            },
+            "subordinates": {
+              "user_1": {
+                "score": 80
+              }
+            }
+          },
+          "main_user": {
+            "self": {
+              "score": 60
+            },
+            "subordinates": {
+              "user_2": {
+                "score": 90
+              }
+            }
           }
         }
       }
     },
     "organization_prodoscores": {
-      "score": 1
+      "current_week": {
+        "day7": {
+          "score": 1
+        }
+      }
     }
   },
   "test_only_company_or_team_view_with_subordinates_are_listed_as_managers": {
     "employee_prodoscores": {
-      "main_user": {
-        "self": {
-          "score": 35
-        },
-        "subordinates": {
-          "user_3": {
-            "score": 80
+      "current_week": {
+        "day7": {
+          "main_user": {
+            "self": {
+              "score": 35
+            },
+            "subordinates": {
+              "user_3": {
+                "score": 80
+              }
+            }
+          },
+          "user_1": {
+            "self": {
+              "score": 60
+            },
+            "subordinates": {
+              "user_4": {
+                "score": 90
+              }
+            }
+          },
+          "user_2": {
+            "self": {
+              "score": 60
+            }
           }
-        }
-      },
-      "user_1": {
-        "self": {
-          "score": 60
-        },
-        "subordinates": {
-          "user_4": {
-            "score": 90
-          }
-        }
-      },
-      "user_2": {
-        "self": {
-          "score": 60
         }
       }
     },
     "organization_prodoscores": {
-      "score": 1
+      "current_week": {
+        "day7": {
+          "score": 1
+        }
+      }
     }
   },
   "test_app_users_are_not_listed_as_managers": {
     "employee_prodoscores": {
-      "main_user": {
-        "self": {
-          "score": 35
-        },
-        "subordinates": {
-          "user_1": {
-            "score": 80
+      "current_week": {
+        "day7": {
+          "main_user": {
+            "self": {
+              "score": 35
+            },
+            "subordinates": {
+              "user_1": {
+                "score": 80
+              }
+            }
           }
         }
       }
     },
     "organization_prodoscores": {
-      "score": 1
+      "current_week": {
+        "day7": {
+          "score": 1
+        }
+      }
     }
   },
   "test_date_range_change_updates_dates_and_resets_pagination": {
@@ -87,39 +111,47 @@
   },
   "test_manager_names_are_displayed_correctly": {
     "employee_prodoscores": {
-      "main_user": {
-        "self": {
-          "score": 35
-        },
-        "subordinates": {
-          "user_3": {
-            "score": 80
-          }
-        }
-      },
-      "user_1": {
-        "self": {
-          "score": 35
-        },
-        "subordinates": {
-          "user_4": {
-            "score": 80
-          }
-        }
-      },
-      "user_2": {
-        "self": {
-          "score": 35
-        },
-        "subordinates": {
-          "user_5": {
-            "score": 80
+      "current_week": {
+        "day7": {
+          "main_user": {
+            "self": {
+              "score": 35
+            },
+            "subordinates": {
+              "user_3": {
+                "score": 80
+              }
+            }
+          },
+          "user_1": {
+            "self": {
+              "score": 35
+            },
+            "subordinates": {
+              "user_4": {
+                "score": 80
+              }
+            }
+          },
+          "user_2": {
+            "self": {
+              "score": 35
+            },
+            "subordinates": {
+              "user_5": {
+                "score": 80
+              }
+            }
           }
         }
       }
     },
     "organization_prodoscores": {
-      "score": 1
+      "current_week": {
+        "day7": {
+          "score": 1
+        }
+      }
     }
   },
   "test_manager_prodoscore_team_distribution_single_day": {
