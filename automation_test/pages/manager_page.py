@@ -410,6 +410,39 @@ class ManagerPage(BasePage):
             .inner_text()
         )
 
+    def get_prodoscore_by_row(self, row_index: int) -> str:
+        """Get the prodoscore from a specific row in the manager table."""
+        return (
+            self.page.locator("tbody tr")
+            .nth(row_index)
+            .locator("td")
+            .nth(1)
+            .locator("p")
+            .inner_text()
+        )
+
+    def get_direct_team_prodoscore_by_row(self, row_index: int) -> str:
+        """Get the direct team prodoscore from a specific row in the manager table."""
+        return (
+            self.page.locator("tbody tr")
+            .nth(row_index)
+            .locator("td")
+            .nth(3)
+            .locator("p")
+            .inner_text()
+        )
+
+    def get_percent_change_by_row(self, row_index: int) -> str:
+        """Get the percent change from a specific row in the manager table."""
+        return (
+            self.page.locator("tbody tr")
+            .nth(row_index)
+            .locator("td")
+            .nth(4)
+            .locator("p")
+            .inner_text()
+        )
+
     def _get_manager_row(self, manager_name: str):
         """Get the row locator for a specific manager by name."""
         return self.page.locator(
@@ -476,6 +509,15 @@ class ManagerPage(BasePage):
                 "arrow_type": percent_change_arrow_type,
             },
         }
+
+    def go_to_manager_under_page(self, manager_name: str):
+        """Click on a manager name to navigate to the Manager Under Page."""
+        from .manager_under_page import ManagerUnderPage
+
+        row = self._get_manager_row(manager_name)
+        self.click_locator(row, f"Manager Name Link for {manager_name}")
+        self.wait_for_url("**/employees/under/**")
+        return ManagerUnderPage(self.page)
 
     def get_team_distribution_bars_locator(self, manager_name: str):
         """

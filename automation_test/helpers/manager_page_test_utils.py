@@ -4,6 +4,7 @@ Helper functions for manager page test assertions.
 
 from playwright.sync_api import expect
 
+from automation_test.pages.manager_under_page import ManagerUnderPage
 from automation_test.utils.employee_data_helper import (
     calculate_percent_change,
     get_average_score,
@@ -132,6 +133,54 @@ def assert_manager_prodoscore_team_scores_and_percentage_change(
             f"Actual: {actual_team_prodoscore_color}\n"
             f"Expected: {expected_team_prodoscore_color}"
         )
+
+
+def assert_manager_under_page_navigation(
+    manager_page, employees, employee_prodoscore_data, day_map
+):
+    """
+    Assert navigation to manager under page for all employees.
+    Args:
+        manager_page: The page object with table accessors.
+        employees: Dict of employee objects keyed by id.
+        employee_prodoscore_data: Nested dict of prodoscore data.
+        day_map: Dict mapping week keys to day keys.
+    """
+    for key, employee in employees.items():
+        prev_self_scores = [
+            employee_prodoscore_data.get("previous_week", {})
+            .get(day_key, {})
+            .get(key, {})
+            .get("self", {})
+            .get("score")
+            for day_key in day_map.get("previous_week", {})
+        ]
+        curr_self_scores = [
+            employee_prodoscore_data.get("current_week", {})
+            .get(day_key, {})
+            .get(key, {})
+            .get("self", {})
+            .get("score")
+            for day_key in day_map.get("current_week", {})
+        ]
+        if not any(prev_self_scores) and not any(curr_self_scores):
+            continue
+
+        # Go to manager under page
+        manager_under_page: ManagerUnderPage = manager_page.go_to_manager_under_page(
+            employee.full_name
+        )
+
+        # Verify employee under page displays the correct employee
+        expect(manager_under_page.employee_under_section).to_contain_text(
+            employee.full_name
+        )
+
+        # Go back to manager page
+        manager_page = manager_under_page.go_to_manager_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
 
 
 def assert_hover_and_distribution_bars(
@@ -422,7 +471,9 @@ def assert_manager_prodoscore_and_team_prodoscore(
         )
 
 
-def assert_manager_table_sorted_and_row_count(manager_page, expected_users):
+def assert_manager_table_sorted_and_row_count(
+    manager_page, expected_users, ascending=True
+):
     """
     Assert that the manager table has the expected number of rows and is sorted by manager name.
     Args:
@@ -441,11 +492,244 @@ def assert_manager_table_sorted_and_row_count(manager_page, expected_users):
     manager_names_in_table = [
         manager_page.get_manager_name_by_row(i) for i in range(num_rows)
     ]
-    expected_names = sorted([user.full_name for user in expected_users])
+    expected_names = sorted(
+        [user.full_name for user in expected_users], reverse=not ascending
+    )
     assert manager_names_in_table == expected_names, (
         f"Manager table not sorted by name.\n"
         f"Actual: {manager_names_in_table}\n"
         f"Expected: {expected_names}"
+    )
+
+
+def assert_manager_table_sorted_by_prodoscore(
+    manager_page, employees, employee_prodoscore_data, day_map, ascending=True
+):
+    """
+    Assert that the manager table is sorted by prodoscore.
+    Args:
+        manager_page: The page object with table accessors.
+        employees: Dict of employee objects keyed by id.
+        employee_prodoscore_data: Nested dict of prodoscore data.
+        day_map: Dict mapping week keys to day keys.
+        ascending: Boolean indicating sort order.
+    """
+    # Get number of rows in the table
+    num_rows = manager_page.get_number_of_rows_in_manager_table()
+
+    # Get prodoscores from the table
+    prodoscores_in_table = [
+        manager_page.get_prodoscore_by_row(i) for i in range(num_rows)
+    ]
+
+    # Get expected prodoscores from employees and prodoscore data
+    expected_prodoscores = []
+    for key, employee in employees.items():
+        # Skip manager if role <= 0
+        if getattr(employee, "role", 1) <= 0:
+            continue
+
+        curr_self_scores = [
+            employee_prodoscore_data.get("current_week", {})
+            .get(day_key, {})
+            .get(key, {})
+            .get("self", {})
+            .get("score")
+            for day_key in day_map.get("current_week", {})
+        ]
+        if not any(curr_self_scores):
+            continue
+
+        # Validate manager's prodoscore for current week
+        expected_prodoscore = get_average_score(curr_self_scores)
+        expected_prodoscores.append(expected_prodoscore)
+
+    # Sort the expected prodoscores
+    expected_prodoscores.sort(reverse=not ascending)
+
+    # Convert to strings for comparison (as in the table)
+    expected_prodoscores_str = [str(score) for score in expected_prodoscores]
+
+    # Verify sorting
+    assert prodoscores_in_table == expected_prodoscores_str, (
+        f"Manager table not sorted by name.\n"
+        f"Actual: {prodoscores_in_table}\n"
+        f"Expected: {expected_prodoscores_str}"
+    )
+
+
+def assert_manager_table_sorted_by_direct_team_prodoscore(
+    manager_page, employees, employee_prodoscore_data, day_map, ascending=True
+):
+    """
+    Assert that the manager table is sorted by direct team prodoscore.
+    Args:
+        manager_page: The page object with table accessors.
+        employees: Dict of employee objects keyed by id.
+        employee_prodoscore_data: Nested dict of prodoscore data.
+        day_map: Dict mapping week keys to day keys.
+        ascending: Boolean indicating sort order.
+    """
+    # Get number of rows in the table
+    num_rows = manager_page.get_number_of_rows_in_manager_table()
+
+    # Get direct team prodoscores from the table
+    direct_team_prodoscores_in_table = [
+        manager_page.get_direct_team_prodoscore_by_row(i) for i in range(num_rows)
+    ]
+
+    # Get expected direct team prodoscores from employees and prodoscore data
+    expected_direct_team_prodoscores = []
+    for key, employee in employees.items():
+        # Skip manager if role <= 0
+        if getattr(employee, "role", 1) <= 0:
+            continue
+
+        curr_self_scores = [
+            employee_prodoscore_data.get("current_week", {})
+            .get(day_key, {})
+            .get(key, {})
+            .get("self", {})
+            .get("score")
+            for day_key in day_map.get("current_week", {})
+        ]
+        if not any(curr_self_scores):
+            continue
+
+        # Validate percentage change in team prodoscore
+        curr_week_scores = []
+
+        for day_key in day_map.get("current_week", {}).keys():
+            subordinates = (
+                employee_prodoscore_data.get("current_week", {})
+                .get(day_key, {})
+                .get(key, {})
+                .get("subordinates", {})
+            )
+            # Skip subordinates with role <= 0 (get from employees dict)
+            scores = [
+                sub["score"]
+                for sub_id, sub in subordinates.items()
+                if getattr(employees.get(sub_id), "role", 1) > 0
+            ]
+            if scores:
+                curr_week_scores.append(get_average_score_without_rounding(scores))
+
+        # Validate team prodoscore for current week
+        expected_team_prodoscore = get_average_score(curr_week_scores)
+        expected_direct_team_prodoscores.append(expected_team_prodoscore)
+
+    # Sort the expected team prodoscores
+    expected_direct_team_prodoscores.sort(reverse=not ascending)
+
+    # Convert to strings for comparison (as in the table)
+    expected_direct_team_prodoscores_str = [
+        str(score) for score in expected_direct_team_prodoscores
+    ]
+
+    # Verify sorting
+    assert direct_team_prodoscores_in_table == expected_direct_team_prodoscores_str, (
+        f"Manager table not sorted by name.\n"
+        f"Actual: {direct_team_prodoscores_in_table}\n"
+        f"Expected: {expected_direct_team_prodoscores_str}"
+    )
+
+
+def assert_manager_table_sorted_by_percentage_change(
+    manager_page, employees, employee_prodoscore_data, day_map, ascending=True
+):
+    """
+    Assert that the manager table is sorted by percentage change in direct team prodoscore.
+    Args:
+        manager_page: The page object with table accessors.
+        employees: Dict of employee objects keyed by id.
+        employee_prodoscore_data: Nested dict of prodoscore data.
+        day_map: Dict mapping week keys to day keys.
+        ascending: Boolean indicating sort order.
+    """
+    # Get number of rows in the table
+    num_rows = manager_page.get_number_of_rows_in_manager_table()
+
+    # Get percentage changes from the table
+    percentage_changes_in_table = [
+        manager_page.get_percent_change_by_row(i) for i in range(num_rows)
+    ]
+
+    # Get expected percentage changes from employees and prodoscore data
+    expected_percentage_changes = []
+    for key in employees.keys():
+        prev_self_scores = [
+            employee_prodoscore_data.get("previous_week", {})
+            .get(day_key, {})
+            .get(key, {})
+            .get("self", {})
+            .get("score")
+            for day_key in day_map.get("previous_week", {})
+        ]
+        curr_self_scores = [
+            employee_prodoscore_data.get("current_week", {})
+            .get(day_key, {})
+            .get(key, {})
+            .get("self", {})
+            .get("score")
+            for day_key in day_map.get("current_week", {})
+        ]
+        if not any(prev_self_scores) and not any(curr_self_scores):
+            continue
+
+        # Get percentage change in team prodoscore
+        prev_week_scores = []
+        curr_week_scores = []
+
+        for day_key in day_map.get("previous_week", {}).keys():
+            subordinates = (
+                employee_prodoscore_data.get("previous_week", {})
+                .get(day_key, {})
+                .get(key, {})
+                .get("subordinates", {})
+            )
+            scores = [sub["score"] for sub in subordinates.values()]
+            if scores:
+                prev_week_scores.append(get_average_score_without_rounding(scores))
+
+        for day_key in day_map.get("current_week", {}).keys():
+            subordinates = (
+                employee_prodoscore_data.get("current_week", {})
+                .get(day_key, {})
+                .get(key, {})
+                .get("subordinates", {})
+            )
+            scores = [sub["score"] for sub in subordinates.values()]
+            if scores:
+                curr_week_scores.append(get_average_score_without_rounding(scores))
+
+        prev_week_avg = (
+            get_average_score_without_rounding(prev_week_scores)
+            if prev_week_scores
+            else None
+        )
+        curr_week_avg = (
+            get_average_score_without_rounding(curr_week_scores)
+            if curr_week_scores
+            else None
+        )
+
+        expected_percentage_change = calculate_percent_change(
+            prev_week_avg, curr_week_avg
+        )
+
+        expected_percentage_changes.append(expected_percentage_change["value"])
+
+    # Sort the expected percentage changes
+    expected_percentage_changes.sort(
+        key=lambda x: float(x.rstrip("%")), reverse=not ascending
+    )
+
+    # Verify sorting
+    assert percentage_changes_in_table == expected_percentage_changes, (
+        f"Manager table not sorted by name.\n"
+        f"Actual: {percentage_changes_in_table}\n"
+        f"Expected: {expected_percentage_changes}"
     )
 
 

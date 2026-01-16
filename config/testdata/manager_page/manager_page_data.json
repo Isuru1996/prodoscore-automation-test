@@ -1350,5 +1350,185 @@
         }
       }
     }
+  },
+  "test_click_manager_navigates_to_manager_under_page": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_1": { "score": 25 },
+              "user_2": { "score": 50 }
+            }
+          },
+          "main_user": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_3": { "score": 75 },
+              "user_4": { "score": 80 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_manager_name_sorting_both_directions": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_1": { "score": 25 },
+              "user_2": { "score": 50 }
+            }
+          },
+          "main_user": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_3": { "score": 75 },
+              "user_4": { "score": 80 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_prodoscore_sorting_ascending_and_descending": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 25 },
+            "subordinates": {
+              "user_1": { "score": 25 },
+              "user_2": { "score": 50 }
+            }
+          },
+          "main_user": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_3": { "score": 75 },
+              "user_4": { "score": 80 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_direct_team_prodoscore_sorting_ascending_and_descending": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 25 },
+            "subordinates": {
+              "user_1": { "score": 25 },
+              "user_2": { "score": 50 }
+            }
+          },
+          "main_user": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_3": { "score": 75 },
+              "user_4": { "score": 80 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_percent_change_column_sorts_ascending_and_descending": {
+    "employee_prodoscores": {
+      "previous_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 23 },
+            "subordinates": {
+              "user_1": { "score": 23 },
+              "user_2": { "score": 23 }
+            }
+          },
+          "main_user": {
+            "self": { "score": 51 },
+            "subordinates": {
+              "user_3": { "score": 51 },
+              "user_4": { "score": 51 },
+              "user_5": { "score": 51 }
+            }
+          }
+        }
+      },
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_1": { "score": 57 },
+              "user_2": { "score": 57 }
+            }
+          },
+          "main_user": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_3": { "score": 52 },
+              "user_4": { "score": 52 },
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "previous_week":{
+        "day7":{
+          "score": 1
+        }
+      },
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_sorting_from_any_page_returns_to_first_page": {
+    "employee_prodoscores": [
+      {
+        "score": 2
+      }
+    ],
+    "organization_prodoscores": {
+      "score": 1
+    }
   }
 }
