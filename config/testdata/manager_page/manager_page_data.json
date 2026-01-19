@@ -8,17 +8,17 @@
               "score": 35
             },
             "subordinates": {
-              "user_1": {
+              "user_2": {
                 "score": 80
               }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": {
               "score": 60
             },
             "subordinates": {
-              "user_2": {
+              "user_3": {
                 "score": 90
               }
             }
@@ -38,27 +38,27 @@
     "employee_prodoscores": {
       "current_week": {
         "day7": {
-          "main_user": {
+          "user_1": {
             "self": {
               "score": 35
             },
             "subordinates": {
-              "user_3": {
+              "user_4": {
                 "score": 80
               }
             }
           },
-          "user_1": {
+          "user_2": {
             "self": {
               "score": 60
             },
             "subordinates": {
-              "user_4": {
+              "user_5": {
                 "score": 90
               }
             }
           },
-          "user_2": {
+          "user_3": {
             "self": {
               "score": 60
             }
@@ -78,12 +78,12 @@
     "employee_prodoscores": {
       "current_week": {
         "day7": {
-          "main_user": {
+          "user_1": {
             "self": {
               "score": 35
             },
             "subordinates": {
-              "user_1": {
+              "user_2": {
                 "score": 80
               }
             }
@@ -113,16 +113,6 @@
     "employee_prodoscores": {
       "current_week": {
         "day7": {
-          "main_user": {
-            "self": {
-              "score": 35
-            },
-            "subordinates": {
-              "user_3": {
-                "score": 80
-              }
-            }
-          },
           "user_1": {
             "self": {
               "score": 35
@@ -139,6 +129,16 @@
             },
             "subordinates": {
               "user_5": {
+                "score": 80
+              }
+            }
+          },
+          "user_3": {
+            "self": {
+              "score": 35
+            },
+            "subordinates": {
+              "user_6": {
                 "score": 80
               }
             }
@@ -163,30 +163,30 @@
               "score": 35
             },
             "subordinates": {
-              "user_2": {
-                "score": 80
-              }
-            }
-          },
-          "main_user": {
-            "self": {
-              "score": 60
-            },
-            "subordinates": {
               "user_3": {
-                "score": 90
-              },
-              "user_4": {
-                "score": 20
+                "score": 80
               }
             }
           },
           "user_1": {
             "self": {
+              "score": 60
+            },
+            "subordinates": {
+              "user_4": {
+                "score": 90
+              },
+              "user_5": {
+                "score": 20
+              }
+            }
+          },
+          "user_2": {
+            "self": {
               "score": 80
             },
             "subordinates": {
-              "user_5": {
+              "user_6": {
                 "score": 35
               }
             }
@@ -211,30 +211,30 @@
                 "score": 35
               },
               "subordinates": {
-                "user_2": {
-                  "score": 80
-                }
-              }
-            },
-            "main_user": {
-              "self": {
-                "score": 60
-              },
-              "subordinates": {
                 "user_3": {
-                  "score": 90
-                },
-                "user_4": {
-                  "score": 20
+                  "score": 80
                 }
               }
             },
             "user_1": {
               "self": {
+                "score": 60
+              },
+              "subordinates": {
+                "user_4": {
+                  "score": 90
+                },
+                "user_5": {
+                  "score": 20
+                }
+              }
+            },
+            "user_2": {
+              "self": {
                 "score": 80
               },
               "subordinates": {
-                "user_5": {
+                "user_6": {
                   "score": 35
                 }
               }
@@ -246,30 +246,30 @@
                 "score": 45
               },
               "subordinates": {
-                "user_2": {
-                  "score": 70
-                }
-              }
-            },
-            "main_user": {
-              "self": {
-                "score": 50
-              },
-              "subordinates": {
                 "user_3": {
-                  "score": 85
-                },
-                "user_4": {
-                  "score": 30
+                  "score": 70
                 }
               }
             },
             "user_1": {
               "self": {
+                "score": 50
+              },
+              "subordinates": {
+                "user_4": {
+                  "score": 85
+                },
+                "user_5": {
+                  "score": 30
+                }
+              }
+            },
+            "user_2": {
+              "self": {
                 "score": 75
               },
               "subordinates": {
-                "user_5": {
+                "user_6": {
                   "score": 40
                 }
               }
@@ -281,30 +281,30 @@
                 "score": 55
               },
               "subordinates": {
-                "user_2": {
-                  "score": 60
-                }
-              }
-            },
-            "main_user": {
-              "self": {
-                "score": 40
-              },
-              "subordinates": {
                 "user_3": {
-                  "score": 80
-                },
-                "user_4": {
-                  "score": 40
+                  "score": 60
                 }
               }
             },
             "user_1": {
               "self": {
+                "score": 40
+              },
+              "subordinates": {
+                "user_4": {
+                  "score": 80
+                },
+                "user_5": {
+                  "score": 40
+                }
+              }
+            },
+            "user_2": {
+              "self": {
                 "score": 70
               },
               "subordinates": {
-                "user_5": {
+                "user_6": {
                   "score": 45
                 }
               }
@@ -316,30 +316,30 @@
                 "score": 65
               },
               "subordinates": {
-                "user_2": {
-                  "score": 50
-                }
-              }
-            },
-            "main_user": {
-              "self": {
-                "score": 30
-              },
-              "subordinates": {
                 "user_3": {
-                  "score": 75
-                },
-                "user_4": {
                   "score": 50
                 }
               }
             },
             "user_1": {
               "self": {
+                "score": 30
+              },
+              "subordinates": {
+                "user_4": {
+                  "score": 75
+                },
+                "user_5": {
+                  "score": 50
+                }
+              }
+            },
+            "user_2": {
+              "self": {
                 "score": 65
               },
               "subordinates": {
-                "user_5": {
+                "user_6": {
                   "score": 50
                 }
               }
@@ -351,30 +351,30 @@
                 "score": 75
               },
               "subordinates": {
-                "user_2": {
-                  "score": 40
-                }
-              }
-            },
-            "main_user": {
-              "self": {
-                "score": 20
-              },
-              "subordinates": {
                 "user_3": {
-                  "score": 70
-                },
-                "user_4": {
-                  "score": 60
+                  "score": 40
                 }
               }
             },
             "user_1": {
               "self": {
+                "score": 20
+              },
+              "subordinates": {
+                "user_4": {
+                  "score": 70
+                },
+                "user_5": {
+                  "score": 60
+                }
+              }
+            },
+            "user_2": {
+              "self": {
                 "score": 60
               },
               "subordinates": {
-                "user_5": {
+                "user_6": {
                   "score": 55
                 }
               }
@@ -386,30 +386,30 @@
                 "score": 85
               },
               "subordinates": {
-                "user_2": {
-                  "score": 30
-                }
-              }
-            },
-            "main_user": {
-              "self": {
-                "score": 10
-              },
-              "subordinates": {
                 "user_3": {
-                  "score": 65
-                },
-                "user_4": {
-                  "score": 70
+                  "score": 30
                 }
               }
             },
             "user_1": {
               "self": {
+                "score": 10
+              },
+              "subordinates": {
+                "user_4": {
+                  "score": 65
+                },
+                "user_5": {
+                  "score": 70
+                }
+              }
+            },
+            "user_2": {
+              "self": {
                 "score": 55
               },
               "subordinates": {
-                "user_5": {
+                "user_6": {
                   "score": 60
                 }
               }
@@ -421,30 +421,30 @@
                 "score": 95
               },
               "subordinates": {
-                "user_2": {
-                  "score": 20
-                }
-              }
-            },
-            "main_user": {
-              "self": {
-                "score": 5
-              },
-              "subordinates": {
                 "user_3": {
-                  "score": 60
-                },
-                "user_4": {
-                  "score": 80
+                  "score": 20
                 }
               }
             },
             "user_1": {
               "self": {
+                "score": 5
+              },
+              "subordinates": {
+                "user_4": {
+                  "score": 60
+                },
+                "user_5": {
+                  "score": 80
+                }
+              }
+            },
+            "user_2": {
+              "self": {
                 "score": 50
               },
               "subordinates": {
-                "user_5": {
+                "user_6": {
                   "score": 65
                 }
               }
@@ -487,26 +487,26 @@
               "score": 35
             },
             "subordinates": {
-              "user_1": {
+              "user_2": {
                 "score": 20
               },
-              "user_2": {
+              "user_3": {
                 "score": 60
               }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": {
               "score": 60
             },
             "subordinates": {
-              "user_3": {
+              "user_4": {
                 "score": 90
               },
-              "user_4": {
+              "user_5": {
                 "score": 95
               },
-              "user_5": {
+              "user_6": {
                 "score": 80
               }
             }
@@ -526,18 +526,18 @@
     "employee_prodoscores": {
       "current_week": {
         "day7": {
-          "main_user": {
+          "user_1": {
             "self": {
               "score": 60
             },
             "subordinates": {
-              "user_1": {
+              "user_2": {
                 "score": 20
               },
-              "user_2": {
+              "user_3": {
                 "score": 60
               },
-              "user_3": {
+              "user_4": {
                 "score": 80
               }
             }
@@ -557,13 +557,13 @@
     "employee_prodoscores": {
       "current_week": {
         "day7": {
-          "main_user": {
-            "self": { "score": 39 },
-            "subordinates": { "user_2": { "score": 39 } }
-          },
           "user_1": {
+            "self": { "score": 39 },
+            "subordinates": { "user_3": { "score": 39 } }
+          },
+          "user_2": {
             "self": { "score": 41 },
-            "subordinates": { "user_3": { "score": 41 } }
+            "subordinates": { "user_4": { "score": 41 } }
           }
         }
       }
@@ -578,13 +578,13 @@
     "employee_prodoscores": {
       "current_week": {
         "day7": {
-          "main_user": {
-            "self": { "score": 74 },
-            "subordinates": { "user_2": { "score": 74 } }
-          },
           "user_1": {
+            "self": { "score": 74 },
+            "subordinates": { "user_3": { "score": 74 } }
+          },
+          "user_2": {
             "self": { "score": 76 },
-            "subordinates": { "user_3": { "score": 76 } }
+            "subordinates": { "user_4": { "score": 76 } }
           }
         }
       }
@@ -602,16 +602,16 @@
           "login_user": {
             "self": { "score": 23 },
             "subordinates": {
-              "user_1": { "score": 23 },
-              "user_2": { "score": 23 }
+              "user_2": { "score": 23 },
+              "user_3": { "score": 23 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 51 },
             "subordinates": {
-              "user_3": { "score": 51 },
               "user_4": { "score": 51 },
-              "user_5": { "score": 51 }
+              "user_5": { "score": 51 },
+              "user_6": { "score": 51 }
             }
           }
         },
@@ -619,16 +619,16 @@
           "login_user": {
             "self": { "score": 57 },
             "subordinates": {
-              "user_1": { "score": 57 },
-              "user_2": { "score": 57 }
+              "user_2": { "score": 57 },
+              "user_3": { "score": 57 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_3": { "score": 52 },
               "user_4": { "score": 52 },
-              "user_5": { "score": 52 }
+              "user_5": { "score": 52 },
+              "user_6": { "score": 52 }
             }
           }
         },
@@ -636,16 +636,16 @@
           "login_user": {
             "self": { "score": 89 },
             "subordinates": {
-              "user_1": { "score": 89 },
-              "user_2": { "score": 89 }
+              "user_2": { "score": 89 },
+              "user_3": { "score": 89 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 53 },
             "subordinates": {
-              "user_3": { "score": 53 },
               "user_4": { "score": 53 },
-              "user_5": { "score": 53 }
+              "user_5": { "score": 53 },
+              "user_6": { "score": 53 }
             }
           }
         },
@@ -653,16 +653,16 @@
           "login_user": {
             "self": { "score": 12 },
             "subordinates": {
-              "user_1": { "score": 12 },
-              "user_2": { "score": 12 }
+              "user_2": { "score": 12 },
+              "user_3": { "score": 12 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_3": { "score": 52 },
               "user_4": { "score": 52 },
-              "user_5": { "score": 52 }
+              "user_5": { "score": 52 },
+              "user_6": { "score": 52 }
             }
           }
         },
@@ -670,16 +670,16 @@
           "login_user": {
             "self": { "score": 76 },
             "subordinates": {
-              "user_1": { "score": 76 },
-              "user_2": { "score": 76 }
+              "user_2": { "score": 76 },
+              "user_3": { "score": 76 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 53 },
             "subordinates": {
-              "user_3": { "score": 53 },
               "user_4": { "score": 53 },
-              "user_5": { "score": 53 }
+              "user_5": { "score": 53 },
+              "user_6": { "score": 53 }
             }
           }
         },
@@ -687,16 +687,16 @@
           "login_user": {
             "self": { "score": 45 },
             "subordinates": {
-              "user_1": { "score": 45 },
-              "user_2": { "score": 45 }
+              "user_2": { "score": 45 },
+              "user_3": { "score": 45 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_3": { "score": 52 },
               "user_4": { "score": 52 },
-              "user_5": { "score": 52 }
+              "user_5": { "score": 52 },
+              "user_6": { "score": 52 }
             }
           }
         },
@@ -704,16 +704,16 @@
           "login_user": {
             "self": { "score": 68 },
             "subordinates": {
-              "user_1": { "score": 68 },
-              "user_2": { "score": 68 }
+              "user_2": { "score": 68 },
+              "user_3": { "score": 68 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 53 },
             "subordinates": {
-              "user_3": { "score": 53 },
               "user_4": { "score": 53 },
-              "user_5": { "score": 53 }
+              "user_5": { "score": 53 },
+              "user_6": { "score": 53 }
             }
           }
         }
@@ -738,16 +738,16 @@
           "login_user": {
             "self": { "score": 23 },
             "subordinates": {
-              "user_1": { "score": 23 },
-              "user_2": { "score": 23 }
+              "user_2": { "score": 23 },
+              "user_3": { "score": 23 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 51 },
             "subordinates": {
-              "user_3": { "score": 51 },
               "user_4": { "score": 51 },
-              "user_5": { "score": 51 }
+              "user_5": { "score": 51 },
+              "user_6": { "score": 51 }
             }
           }
         }
@@ -757,16 +757,16 @@
           "login_user": {
             "self": { "score": 57 },
             "subordinates": {
-              "user_1": { "score": 57 },
-              "user_2": { "score": 57 }
+              "user_2": { "score": 57 },
+              "user_3": { "score": 57 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_3": { "score": 52 },
               "user_4": { "score": 52 },
-              "user_5": { "score": 52 }
+              "user_5": { "score": 52 },
+              "user_6": { "score": 52 }
             }
           }
         }
@@ -792,16 +792,16 @@
           "login_user": {
             "self": { "score": 10 },
             "subordinates": {
-              "user_1": { "score": 10 },
-              "user_2": { "score": 10 }
+              "user_2": { "score": 10 },
+              "user_3": { "score": 10 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 20 },
             "subordinates": {
-              "user_3": { "score": 20 },
               "user_4": { "score": 20 },
-              "user_5": { "score": 20 }
+              "user_5": { "score": 20 },
+              "user_6": { "score": 20 }
             }
           }
         },
@@ -809,16 +809,16 @@
           "login_user": {
             "self": { "score": 15 },
             "subordinates": {
-              "user_1": { "score": 15 },
-              "user_2": { "score": 15 }
+              "user_2": { "score": 15 },
+              "user_3": { "score": 15 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 25 },
             "subordinates": {
-              "user_3": { "score": 25 },
               "user_4": { "score": 25 },
-              "user_5": { "score": 25 }
+              "user_5": { "score": 25 },
+              "user_6": { "score": 25 }
             }
           }
         },
@@ -826,16 +826,16 @@
           "login_user": {
             "self": { "score": 20 },
             "subordinates": {
-              "user_1": { "score": 20 },
-              "user_2": { "score": 20 }
+              "user_2": { "score": 20 },
+              "user_3": { "score": 20 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 30 },
             "subordinates": {
-              "user_3": { "score": 30 },
               "user_4": { "score": 30 },
-              "user_5": { "score": 30 }
+              "user_5": { "score": 30 },
+              "user_6": { "score": 30 }
             }
           }
         },
@@ -843,16 +843,16 @@
           "login_user": {
             "self": { "score": 18 },
             "subordinates": {
-              "user_1": { "score": 18 },
-              "user_2": { "score": 18 }
+              "user_2": { "score": 18 },
+              "user_3": { "score": 18 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 28 },
             "subordinates": {
-              "user_3": { "score": 28 },
               "user_4": { "score": 28 },
-              "user_5": { "score": 28 }
+              "user_5": { "score": 28 },
+              "user_6": { "score": 28 }
             }
           }
         },
@@ -860,16 +860,16 @@
           "login_user": {
             "self": { "score": 21 },
             "subordinates": {
-              "user_1": { "score": 21 },
-              "user_2": { "score": 21 }
+              "user_2": { "score": 21 },
+              "user_3": { "score": 21 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 31 },
             "subordinates": {
-              "user_3": { "score": 31 },
               "user_4": { "score": 31 },
-              "user_5": { "score": 31 }
+              "user_5": { "score": 31 },
+              "user_6": { "score": 31 }
             }
           }
         },
@@ -877,16 +877,16 @@
           "login_user": {
             "self": { "score": 22 },
             "subordinates": {
-              "user_1": { "score": 22 },
-              "user_2": { "score": 22 }
+              "user_2": { "score": 22 },
+              "user_3": { "score": 22 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 32 },
             "subordinates": {
-              "user_3": { "score": 32 },
               "user_4": { "score": 32 },
-              "user_5": { "score": 32 }
+              "user_5": { "score": 32 },
+              "user_6": { "score": 32 }
             }
           }
         },
@@ -894,16 +894,16 @@
           "login_user": {
             "self": { "score": 23 },
             "subordinates": {
-              "user_1": { "score": 23 },
-              "user_2": { "score": 23 }
+              "user_2": { "score": 23 },
+              "user_3": { "score": 23 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 33 },
             "subordinates": {
-              "user_3": { "score": 33 },
               "user_4": { "score": 33 },
-              "user_5": { "score": 33 }
+              "user_5": { "score": 33 },
+              "user_6": { "score": 33 }
             }
           }
         }
@@ -913,16 +913,16 @@
           "login_user": {
             "self": { "score": 50 },
             "subordinates": {
-              "user_1": { "score": 50 },
-              "user_2": { "score": 50 }
+              "user_2": { "score": 50 },
+              "user_3": { "score": 50 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 60 },
             "subordinates": {
-              "user_3": { "score": 60 },
               "user_4": { "score": 60 },
-              "user_5": { "score": 60 }
+              "user_5": { "score": 60 },
+              "user_6": { "score": 60 }
             }
           }
         },
@@ -930,16 +930,16 @@
           "login_user": {
             "self": { "score": 51 },
             "subordinates": {
-              "user_1": { "score": 51 },
-              "user_2": { "score": 51 }
+              "user_2": { "score": 51 },
+              "user_3": { "score": 51 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 61 },
             "subordinates": {
-              "user_3": { "score": 61 },
               "user_4": { "score": 61 },
-              "user_5": { "score": 61 }
+              "user_5": { "score": 61 },
+              "user_6": { "score": 61 }
             }
           }
         },
@@ -947,16 +947,16 @@
           "login_user": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_1": { "score": 52 },
-              "user_2": { "score": 52 }
+              "user_2": { "score": 52 },
+              "user_3": { "score": 52 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 62 },
             "subordinates": {
-              "user_3": { "score": 62 },
               "user_4": { "score": 62 },
-              "user_5": { "score": 62 }
+              "user_5": { "score": 62 },
+              "user_6": { "score": 62 }
             }
           }
         },
@@ -964,16 +964,16 @@
           "login_user": {
             "self": { "score": 53 },
             "subordinates": {
-              "user_1": { "score": 53 },
-              "user_2": { "score": 53 }
+              "user_2": { "score": 53 },
+              "user_3": { "score": 53 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 63 },
             "subordinates": {
-              "user_3": { "score": 63 },
               "user_4": { "score": 63 },
-              "user_5": { "score": 63 }
+              "user_5": { "score": 63 },
+              "user_6": { "score": 63 }
             }
           }
         },
@@ -981,16 +981,16 @@
           "login_user": {
             "self": { "score": 54 },
             "subordinates": {
-              "user_1": { "score": 54 },
-              "user_2": { "score": 54 }
+              "user_2": { "score": 54 },
+              "user_3": { "score": 54 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 64 },
             "subordinates": {
-              "user_3": { "score": 64 },
               "user_4": { "score": 64 },
-              "user_5": { "score": 64 }
+              "user_5": { "score": 64 },
+              "user_6": { "score": 64 }
             }
           }
         },
@@ -998,16 +998,16 @@
           "login_user": {
             "self": { "score": 55 },
             "subordinates": {
-              "user_1": { "score": 55 },
-              "user_2": { "score": 55 }
+              "user_2": { "score": 55 },
+              "user_3": { "score": 55 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 65 },
             "subordinates": {
-              "user_3": { "score": 65 },
               "user_4": { "score": 65 },
-              "user_5": { "score": 65 }
+              "user_5": { "score": 65 },
+              "user_6": { "score": 65 }
             }
           }
         },
@@ -1015,16 +1015,16 @@
           "login_user": {
             "self": { "score": 57 },
             "subordinates": {
-              "user_1": { "score": 57 },
-              "user_2": { "score": 57 }
+              "user_2": { "score": 57 },
+              "user_3": { "score": 57 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 66 },
             "subordinates": {
-              "user_3": { "score": 66 },
               "user_4": { "score": 66 },
-              "user_5": { "score": 66 }
+              "user_5": { "score": 66 },
+              "user_6": { "score": 66 }
             }
           }
         }
@@ -1058,16 +1058,16 @@
           "login_user": {
             "self": { "score": 57 },
             "subordinates": {
-              "user_1": { "score": 57 },
-              "user_2": { "score": 57 }
+              "user_2": { "score": 57 },
+              "user_3": { "score": 57 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_3": { "score": 52 },
               "user_4": { "score": 52 },
-              "user_5": { "score": 52 }
+              "user_5": { "score": 52 },
+              "user_6": { "score": 52 }
             }
           }
         }
@@ -1088,16 +1088,16 @@
           "login_user": {
             "self": { "score": 57 },
             "subordinates": {
-              "user_1": { "score": 57 },
-              "user_2": { "score": 57 }
+              "user_2": { "score": 57 },
+              "user_3": { "score": 57 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_3": { "score": 52 },
               "user_4": { "score": 52 },
-              "user_5": { "score": 52 }
+              "user_5": { "score": 52 },
+              "user_6": { "score": 52 }
             }
           }
         }
@@ -1115,12 +1115,12 @@
     "employee_prodoscores": {
       "current_week":{
         "day7":{
-          "main_user": {
+          "user_1": {
             "self": { "score": 0 },
             "subordinates": {
-              "user_1": { "score": 0 },
               "user_2": { "score": 0 },
-              "user_3": { "score": 0 }
+              "user_3": { "score": 0 },
+              "user_4": { "score": 0 }
             }
           }
         }
@@ -1141,19 +1141,19 @@
           "login_user": {
             "self": { "score": 57 },
             "subordinates": {
-              "user_2": { "score": 57 }
-            }
-          },
-          "main_user": {
-            "self": { "score": 52 },
-            "subordinates": {
-              "user_3": { "score": 52 }
+              "user_3": { "score": 57 }
             }
           },
           "user_1": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_4": { "score": 52 }
+            }
+          },
+          "user_2": {
             "self": { "score": 48 },
             "subordinates": {
-              "user_4": { "score": 48 }
+              "user_5": { "score": 48 }
             }
           }
         }
@@ -1171,39 +1171,39 @@
     "employee_prodoscores": {
       "current_week": {
         "day1": {
-          "login_user": { "self": { "score": 53 }, "subordinates": { "user_2": { "score": 51 } } },
-          "main_user": { "self": { "score": 62 }, "subordinates": { "user_3": { "score": 60 } } },
-          "user_1": { "self": { "score": 47 }, "subordinates": { "user_4": { "score": 45 } } }
+          "login_user": { "self": { "score": 53 }, "subordinates": { "user_3": { "score": 51 } } },
+          "user_1": { "self": { "score": 62 }, "subordinates": { "user_4": { "score": 60 } } },
+          "user_2": { "self": { "score": 47 }, "subordinates": { "user_5": { "score": 45 } } }
         },
         "day2": {
-          "login_user": { "self": { "score": 59 }, "subordinates": { "user_2": { "score": 54 } } },
-          "main_user": { "self": { "score": 65 }, "subordinates": { "user_3": { "score": 63 } } },
-          "user_1": { "self": { "score": 50 }, "subordinates": { "user_4": { "score": 49 } } }
+          "login_user": { "self": { "score": 59 }, "subordinates": { "user_3": { "score": 54 } } },
+          "user_1": { "self": { "score": 65 }, "subordinates": { "user_4": { "score": 63 } } },
+          "user_2": { "self": { "score": 50 }, "subordinates": { "user_5": { "score": 49 } } }
         },
         "day3": {
-          "login_user": { "self": { "score": 56 }, "subordinates": { "user_2": { "score": 55 } } },
-          "main_user": { "self": { "score": 68 }, "subordinates": { "user_3": { "score": 66 } } },
-          "user_1": { "self": { "score": 52 }, "subordinates": { "user_4": { "score": 51 } } }
+          "login_user": { "self": { "score": 56 }, "subordinates": { "user_3": { "score": 55 } } },
+          "user_1": { "self": { "score": 68 }, "subordinates": { "user_4": { "score": 66 } } },
+          "user_2": { "self": { "score": 52 }, "subordinates": { "user_5": { "score": 51 } } }
         },
         "day4": {
-          "login_user": { "self": { "score": 61 }, "subordinates": { "user_2": { "score": 59 } } },
-          "main_user": { "self": { "score": 70 }, "subordinates": { "user_3": { "score": 69 } } },
-          "user_1": { "self": { "score": 54 }, "subordinates": { "user_4": { "score": 53 } } }
+          "login_user": { "self": { "score": 61 }, "subordinates": { "user_3": { "score": 59 } } },
+          "user_1": { "self": { "score": 70 }, "subordinates": { "user_4": { "score": 69 } } },
+          "user_2": { "self": { "score": 54 }, "subordinates": { "user_5": { "score": 53 } } }
         },
         "day5": {
-          "login_user": { "self": { "score": 58 }, "subordinates": { "user_2": { "score": 57 } } },
-          "main_user": { "self": { "score": 67 }, "subordinates": { "user_3": { "score": 65 } } },
-          "user_1": { "self": { "score": 49 }, "subordinates": { "user_4": { "score": 48 } } }
+          "login_user": { "self": { "score": 58 }, "subordinates": { "user_3": { "score": 57 } } },
+          "user_1": { "self": { "score": 67 }, "subordinates": { "user_4": { "score": 65 } } },
+          "user_2": { "self": { "score": 49 }, "subordinates": { "user_5": { "score": 48 } } }
         },
         "day6": {
-          "login_user": { "self": { "score": 60 }, "subordinates": { "user_2": { "score": 58 } } },
-          "main_user": { "self": { "score": 69 }, "subordinates": { "user_3": { "score": 68 } } },
-          "user_1": { "self": { "score": 53 }, "subordinates": { "user_4": { "score": 52 } } }
+          "login_user": { "self": { "score": 60 }, "subordinates": { "user_3": { "score": 58 } } },
+          "user_1": { "self": { "score": 69 }, "subordinates": { "user_4": { "score": 68 } } },
+          "user_2": { "self": { "score": 53 }, "subordinates": { "user_5": { "score": 52 } } }
         },
         "day7": {
-          "login_user": { "self": { "score": 57 }, "subordinates": { "user_2": { "score": 57 } } },
-          "main_user": { "self": { "score": 52 }, "subordinates": { "user_3": { "score": 52 } } },
-          "user_1": { "self": { "score": 48 }, "subordinates": { "user_4": { "score": 48 } } }
+          "login_user": { "self": { "score": 57 }, "subordinates": { "user_3": { "score": 57 } } },
+          "user_1": { "self": { "score": 52 }, "subordinates": { "user_4": { "score": 52 } } },
+          "user_2": { "self": { "score": 48 }, "subordinates": { "user_5": { "score": 48 } } }
         }
       }
     },
@@ -1220,7 +1220,7 @@
     },
     "employee_holidays": {
       "current_week": {
-        "user_3": ["day1", "day2", "day3", "day4", "day5", "day6", "day7"]
+        "user_4": ["day1", "day2", "day3", "day4", "day5", "day6", "day7"]
       }
     }
   },
@@ -1228,39 +1228,39 @@
     "employee_prodoscores": {
       "current_week": {
         "day1": {
-          "login_user": { "self": { "score": 53 }, "subordinates": { "user_2": { "score": 51 } } },
-          "main_user": { "self": { "score": 62 }, "subordinates": { "user_3": { "score": 60 } } },
-          "user_1": { "self": { "score": 47 }, "subordinates": { "user_4": { "score": 45 } } }
+          "login_user": { "self": { "score": 53 }, "subordinates": { "user_3": { "score": 51 } } },
+          "user_1": { "self": { "score": 62 }, "subordinates": { "user_4": { "score": 60 } } },
+          "user_2": { "self": { "score": 47 }, "subordinates": { "user_5": { "score": 45 } } }
         },
         "day2": {
-          "login_user": { "self": { "score": 59 }, "subordinates": { "user_2": { "score": 54 } } },
-          "main_user": { "self": { "score": 65 }, "subordinates": { "user_3": { "score": 63 } } },
-          "user_1": { "self": { "score": 50 }, "subordinates": { "user_4": { "score": 49 } } }
+          "login_user": { "self": { "score": 59 }, "subordinates": { "user_3": { "score": 54 } } },
+          "user_1": { "self": { "score": 65 }, "subordinates": { "user_4": { "score": 63 } } },
+          "user_2": { "self": { "score": 50 }, "subordinates": { "user_5": { "score": 49 } } }
         },
         "day3": {
-          "login_user": { "self": { "score": 56 }, "subordinates": { "user_2": { "score": 55 } } },
-          "main_user": { "self": { "score": 68 }, "subordinates": { "user_3": { "score": 66 } } },
-          "user_1": { "self": { "score": 52 }, "subordinates": { "user_4": { "score": 51 } } }
+          "login_user": { "self": { "score": 56 }, "subordinates": { "user_3": { "score": 55 } } },
+          "user_1": { "self": { "score": 68 }, "subordinates": { "user_4": { "score": 66 } } },
+          "user_2": { "self": { "score": 52 }, "subordinates": { "user_5": { "score": 51 } } }
         },
         "day4": {
-          "login_user": { "self": { "score": 61 }, "subordinates": { "user_2": { "score": 59 } } },
-          "main_user": { "self": { "score": 70 }, "subordinates": { "user_3": { "score": 69 } } },
-          "user_1": { "self": { "score": 54 }, "subordinates": { "user_4": { "score": 53 } } }
+          "login_user": { "self": { "score": 61 }, "subordinates": { "user_3": { "score": 59 } } },
+          "user_1": { "self": { "score": 70 }, "subordinates": { "user_4": { "score": 69 } } },
+          "user_2": { "self": { "score": 54 }, "subordinates": { "user_5": { "score": 53 } } }
         },
         "day5": {
-          "login_user": { "self": { "score": 58 }, "subordinates": { "user_2": { "score": 57 } } },
-          "main_user": { "self": { "score": 67 }, "subordinates": { "user_3": { "score": 65 } } },
-          "user_1": { "self": { "score": 49 }, "subordinates": { "user_4": { "score": 48 } } }
+          "login_user": { "self": { "score": 58 }, "subordinates": { "user_3": { "score": 57 } } },
+          "user_1": { "self": { "score": 67 }, "subordinates": { "user_4": { "score": 65 } } },
+          "user_2": { "self": { "score": 49 }, "subordinates": { "user_5": { "score": 48 } } }
         },
         "day6": {
-          "login_user": { "self": { "score": 60 }, "subordinates": { "user_2": { "score": 58 } } },
-          "main_user": { "self": { "score": 69 }, "subordinates": { "user_3": { "score": 68 } } },
-          "user_1": { "self": { "score": 53 }, "subordinates": { "user_4": { "score": 52 } } }
+          "login_user": { "self": { "score": 60 }, "subordinates": { "user_3": { "score": 58 } } },
+          "user_1": { "self": { "score": 69 }, "subordinates": { "user_4": { "score": 68 } } },
+          "user_2": { "self": { "score": 53 }, "subordinates": { "user_5": { "score": 52 } } }
         },
         "day7": {
-          "login_user": { "self": { "score": 57 }, "subordinates": { "user_2": { "score": 57 } } },
-          "main_user": { "self": { "score": 52 }, "subordinates": { "user_3": { "score": 52 } } },
-          "user_1": { "self": { "score": 48 }, "subordinates": { "user_4": { "score": 48 } } }
+          "login_user": { "self": { "score": 57 }, "subordinates": { "user_3": { "score": 57 } } },
+          "user_1": { "self": { "score": 52 }, "subordinates": { "user_4": { "score": 52 } } },
+          "user_2": { "self": { "score": 48 }, "subordinates": { "user_5": { "score": 48 } } }
         }
       }
     },
@@ -1278,8 +1278,8 @@
     "employee_holidays": {
       "current_week": {
         "login_user": ["day1", "day2", "day3", "day4", "day5", "day6", "day7"],
-        "main_user": ["day1", "day2", "day3", "day4", "day5", "day6", "day7"],
-        "user_1": ["day1", "day2", "day3", "day4", "day5", "day6", "day7"]
+        "user_1": ["day1", "day2", "day3", "day4", "day5", "day6", "day7"],
+        "user_2": ["day1", "day2", "day3", "day4", "day5", "day6", "day7"]
       }
     }
   },
@@ -1290,20 +1290,20 @@
           "login_user": {
             "self": { "score": 57 },
             "subordinates": {
-              "user_2": { "score": 57 }
-            }
-          },
-          "main_user": {
-            "self": { "score": 52 },
-            "subordinates": {
-              "user_3": { "score": 52 }
+              "user_3": { "score": 57 }
             }
           },
           "user_1": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_4": { "score": 52 }
+            }
+          },
+          "user_2": {
             "self": { "score": 48 },
             "subordinates": {
-              "user_4": { "score": 48 },
-              "user_5": { "score": 48 }
+              "user_5": { "score": 48 },
+              "user_6": { "score": 48 }
             }
           }
         }
@@ -1324,20 +1324,20 @@
           "login_user": {
             "self": { "score": 57 },
             "subordinates": {
-              "user_2": { "score": 57 }
-            }
-          },
-          "main_user": {
-            "self": { "score": 52 },
-            "subordinates": {
-              "user_3": { "score": 52 }
+              "user_3": { "score": 57 }
             }
           },
           "user_1": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_4": { "score": 52 }
+            }
+          },
+          "user_2": {
             "self": { "score": 48 },
             "subordinates": {
-              "user_4": { "score": 48 },
-              "user_5": { "score": 48 }
+              "user_5": { "score": 48 },
+              "user_6": { "score": 48 }
             }
           }
         }
@@ -1358,15 +1358,15 @@
           "login_user": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_1": { "score": 25 },
-              "user_2": { "score": 50 }
+              "user_2": { "score": 25 },
+              "user_3": { "score": 50 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_3": { "score": 75 },
-              "user_4": { "score": 80 }
+              "user_4": { "score": 75 },
+              "user_5": { "score": 80 }
             }
           }
         }
@@ -1387,15 +1387,15 @@
           "login_user": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_1": { "score": 25 },
-              "user_2": { "score": 50 }
+              "user_2": { "score": 25 },
+              "user_3": { "score": 50 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_3": { "score": 75 },
-              "user_4": { "score": 80 }
+              "user_4": { "score": 75 },
+              "user_5": { "score": 80 }
             }
           }
         }
@@ -1416,15 +1416,15 @@
           "login_user": {
             "self": { "score": 25 },
             "subordinates": {
-              "user_1": { "score": 25 },
-              "user_2": { "score": 50 }
+              "user_2": { "score": 25 },
+              "user_3": { "score": 50 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_3": { "score": 75 },
-              "user_4": { "score": 80 }
+              "user_4": { "score": 75 },
+              "user_5": { "score": 80 }
             }
           }
         }
@@ -1445,15 +1445,15 @@
           "login_user": {
             "self": { "score": 25 },
             "subordinates": {
-              "user_1": { "score": 25 },
-              "user_2": { "score": 50 }
+              "user_2": { "score": 25 },
+              "user_3": { "score": 50 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_3": { "score": 75 },
-              "user_4": { "score": 80 }
+              "user_4": { "score": 75 },
+              "user_5": { "score": 80 }
             }
           }
         }
@@ -1474,16 +1474,16 @@
           "login_user": {
             "self": { "score": 23 },
             "subordinates": {
-              "user_1": { "score": 23 },
-              "user_2": { "score": 23 }
+              "user_2": { "score": 23 },
+              "user_3": { "score": 23 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 51 },
             "subordinates": {
-              "user_3": { "score": 51 },
               "user_4": { "score": 51 },
-              "user_5": { "score": 51 }
+              "user_5": { "score": 51 },
+              "user_6": { "score": 51 }
             }
           }
         }
@@ -1493,16 +1493,16 @@
           "login_user": {
             "self": { "score": 57 },
             "subordinates": {
-              "user_1": { "score": 57 },
-              "user_2": { "score": 57 }
+              "user_2": { "score": 57 },
+              "user_3": { "score": 57 }
             }
           },
-          "main_user": {
+          "user_1": {
             "self": { "score": 52 },
             "subordinates": {
-              "user_3": { "score": 52 },
               "user_4": { "score": 52 },
-              "user_5": { "score": 52 }
+              "user_5": { "score": 52 },
+              "user_6": { "score": 52 }
             }
           }
         }

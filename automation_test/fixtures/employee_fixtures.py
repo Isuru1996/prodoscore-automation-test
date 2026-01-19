@@ -13,7 +13,7 @@ def employee_config(db_client, config, test_employees, logger):
     """
     Sets up a domain with default values in the database for the given domain ID.
     Runs once per test function, before and after each test.
-    Returns a dictionary mapping login_user, main_user, user_1, user_2, ... to Employee objects.
+    Returns a dictionary mapping login_user, user_1, user_2, user_3, ... to Employee objects.
     """
     login_user_id = config.get("user.login_user.id")
     domain_id = config.get("domain.id")

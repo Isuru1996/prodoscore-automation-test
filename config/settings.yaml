@@ -15,7 +15,7 @@ db:
   database: prodoapp_db_stg02
   user: is.weerasinghe
   password: ""
-  pool_size: 2
+  pool_size: 10
 
 # Test Data
 test_data:
@@ -36,4 +36,4 @@ user:
 # Services details
 api_clients:
   prodoscore_crypto:
-    base_url: http://localhost:8087
+    base_url: http://localhost:8080

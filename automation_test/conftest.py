@@ -11,6 +11,7 @@ from automation_lib.fixtures import (
     page,
     test_settings,
 )
+from automation_lib.plugins import pytest_runtest_logreport
 
 from automation_test.fixtures import (
     add_employees,
@@ -41,4 +42,5 @@ __all__ = [
     "from_date",
     "current_date",
     "delete_database_data",
+    "pytest_runtest_logreport",
 ]

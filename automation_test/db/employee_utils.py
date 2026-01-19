@@ -11,13 +11,13 @@ def create_employees(
     db_client, login_user_id: int, employee_ids: List[int]
 ) -> Dict[str, Employee]:
     """
-    Fetch employee records by IDs and return a mapping with login_user, main_user, user_1, user_2, ...
+    Fetch employee records by IDs and return a mapping with login_user, user_1, user_2, user_3, ...
     Args:
         db_client: The database client/connection.
         employee_ids: A list of employee IDs to fetch.
         The first ID in the list is assumed to be the login user.
     Returns:
-        A dict mapping login_user, main_user, user_1, user_2, ... to Employee objects.
+        A dict mapping login_user, user_1, user_2, user_3, ... to Employee objects.
     """
     employee_ids = employee_ids + [login_user_id]
     if not employee_ids:
@@ -48,22 +48,20 @@ def create_employees(
             notices=result.get("notices"),
             crx_status=result.get("crx_status"),
             coll_id=result.get("coll_id"),
-            test_name=result.get("test_name"),
         )
         for result in results
     ]
 
-    # Assume the last ID in the list is the login user (to match fixture usage)
+    # Separate login user from others
     login_user = next((e for e in employees if e.id == login_user_id), None)
     others = [e for e in employees if e.id != login_user_id]
     others_sorted = sorted(others, key=lambda e: e.id if e.id is not None else 0)
     result = {}
     if login_user:
         result["login_user"] = login_user
-    if others_sorted:
-        result["main_user"] = others_sorted[0]
-        for idx, emp in enumerate(others_sorted[1:]):
-            result[f"user_{idx+1}"] = emp
+    # Add other users as user_1, user_2, user_3, etc.
+    for idx, emp in enumerate(others_sorted, start=1):
+        result[f"user_{idx}"] = emp
     return result
 
 
@@ -156,7 +154,7 @@ def add_test_employees(
             "profileId": f"{source}: Test Profile ID {i}",
             "email": email_cipher,
             "email_hash": email_hash,
-            "fullname": f"{source}: Automation Test User {i}",
+            "fullname": f"{source.lower()}_automation_test_user_{i}",
             "timezone": "America/Los_Angeles",
             "status": status,
         }
@@ -244,7 +242,6 @@ def get_employees(
             notices=result.get("notices"),
             crx_status=result.get("crx_status"),
             coll_id=result.get("coll_id"),
-            test_name=result.get("test_name"),
         )
         for result in results
     ]

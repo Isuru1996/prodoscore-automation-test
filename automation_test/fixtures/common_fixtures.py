@@ -20,18 +20,25 @@ def login_to_prodoscore(page):
     yield dashboard_page
 
 
-@pytest.fixture(scope="class", autouse=True, name="current_date")
+@pytest.fixture(scope="class", name="current_date")
 def current_date(dashboard_page):
     yield dashboard_page.get_to_date_value()
 
 
-@pytest.fixture(scope="class", autouse=True, name="from_date")
+@pytest.fixture(scope="class", name="from_date")
 def from_date(dashboard_page):
     yield dashboard_page.get_from_date_value()
 
 
 @pytest.fixture(scope="function", autouse=True)
-def delete_database_data(from_date, current_date, domain, employees, db_client):
+def delete_database_data(
+    request, logger, from_date, current_date, domain, employees, db_client
+):
+    # Skip if test is marked with @pytest.mark.skip_db_cleanup
+    if request.node.get_closest_marker("skip_db_cleanup"):
+        return
+
+    logger.info("Deleting test data from database")
     filter_condition_1 = f"date >= '{add_days_to_date(from_date, -8)}' AND date <= '{current_date}' AND domain_id = '{domain.id}'"
     delete_employee_prodoscore(db_client, filter_condition_1)
     delete_organization_prodoscore(db_client, filter_condition_1)

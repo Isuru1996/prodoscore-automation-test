@@ -9,7 +9,7 @@ from ..api_responses import (
 
 
 class ProdoscoreCryptoClient(BaseApiClient):
-    def __init__(self, base_url="http://localhost:8087", default_headers=None):
+    def __init__(self, base_url="http://localhost:8080", default_headers=None):
         super().__init__(base_url, default_headers)
 
     def health(self):

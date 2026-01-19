@@ -1,9 +1,12 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from automation_lib.core import BaseModel
+
 
 @dataclass
-class EmployeeProdoscore:
+class EmployeeProdoscore(BaseModel):
+    model_name: str = "EmployeeProdoscoreModel"
     id: Optional[int] = None
     domain_id: int = 0
     employee_id: int = 0
@@ -22,6 +25,9 @@ class EmployeeProdoscore:
         Args:
             db_util: Database utility with an update_data method
         """
+        self.logger.info(
+            f"Committing changes for employee prodoscore (ID: {self.id}, Date: {self.date})"
+        )
         row_to_update = {
             "domain_id": self.domain_id,
             "employee_id": self.employee_id,
@@ -39,27 +45,43 @@ class EmployeeProdoscore:
         )
 
     def change_date(self, new_date: str) -> None:
+        self.logger.info(
+            f"Changing employee prodoscore date from {self.date} to {new_date}"
+        )
         self.date = new_date
 
     def change_role(self, new_role: int) -> None:
+        self.logger.info(f"Changing employee prodoscore role to {new_role}")
         self.role = new_role
 
     def change_score(self, new_score: float) -> None:
+        self.logger.info(f"Changing employee prodoscore score to {new_score}")
         self.score = new_score
 
     def change_ip_int_ext(self, new_ip_int_ext: int) -> None:
+        self.logger.info(f"Changing employee prodoscore ip_int_ext to {new_ip_int_ext}")
         self.ip_int_ext = new_ip_int_ext
 
     def change_total_gap_time(self, new_total_gap_time: int) -> None:
+        self.logger.info(
+            f"Changing employee prodoscore total_gap_time to {new_total_gap_time}"
+        )
         self.total_gap_time = new_total_gap_time
 
     def change_total_active_time(self, new_total_active_time: int) -> None:
+        self.logger.info(
+            f"Changing employee prodoscore total_active_time to {new_total_active_time}"
+        )
         self.total_active_time = new_total_active_time
 
     def change_gap_times(self, new_gap_times: str) -> None:
+        self.logger.info(f"Changing employee prodoscore gap_times to {new_gap_times}")
         self.gap_times = new_gap_times
 
     def change_first_last_activity_times(
         self, new_first_last_activity_times: str
     ) -> None:
+        self.logger.info(
+            f"Changing employee prodoscore first_last_activity_times to {new_first_last_activity_times}"
+        )
         self.first_last_activity_times = new_first_last_activity_times
