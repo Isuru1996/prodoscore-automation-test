@@ -12,3 +12,6 @@ wheels/
 .python-version
 reports/
 trace.zip
+
+# Authentication state
+auth_state.json

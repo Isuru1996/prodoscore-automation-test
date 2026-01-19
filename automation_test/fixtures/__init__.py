@@ -5,13 +5,15 @@ from .common_fixtures import (
     delete_database_data,
     enable_tracing,
     from_date,
-    login_to_prodoscore,
+    get_dashboard_page,
+    setup_authentication,
 )
 from .domain_fixtures import domain_config
 from .employee_fixtures import add_employees, employee_config
 
 __all__ = [
-    "login_to_prodoscore",
+    "get_dashboard_page",
+    "setup_authentication",
     "domain_config",
     "enable_tracing",
     "employee_config",

@@ -4,9 +4,10 @@ from .dashboard_page import DashboardPage
 
 
 class LoginPage(BasePage):
-    def __init__(self, page):
+    def __init__(self, page, base_url: str = "https://stg02.prv-prodoscore.com"):
         super().__init__(page, page_name="LoginPage")
-        self.page_url = "https://stg02.prv-prodoscore.com/"
+        # self.base_url = base_url
+        self.page_url = f"{base_url}/"
 
     @property
     def login_page_logo(self):
@@ -49,4 +50,4 @@ class LoginPage(BasePage):
         self.click_locator(self.sign_in_button, "Sign In Button")
         self.click_locator(self.yes_button, "Yes Button")
         self.wait_for_url("**/dashboard")
-        return DashboardPage(self.page)
+        return DashboardPage(self.page, base_url=self.page_url)

@@ -21,7 +21,8 @@ from automation_test.fixtures import (
     employee_config,
     enable_tracing,
     from_date,
-    login_to_prodoscore,
+    get_dashboard_page,
+    setup_authentication,
 )
 from automation_test.plugins import slack_reporter
 
@@ -36,7 +37,8 @@ __all__ = [
     "db_client",
     "domain_config",
     "employee_config",
-    "login_to_prodoscore",
+    "get_dashboard_page",
+    "setup_authentication",
     "enable_tracing",
     "add_employees",
     "from_date",

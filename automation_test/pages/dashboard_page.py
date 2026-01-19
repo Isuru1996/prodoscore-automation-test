@@ -5,8 +5,9 @@ from .manager_page import ManagerPage
 
 class DashboardPage(BasePage):
 
-    def __init__(self, page):
+    def __init__(self, page, base_url: str = "https://stg02.prv-prodoscore.com"):
         super().__init__(page, page_name="DashboardPage")
+        self.page_url = f"{base_url}/dashboard"
 
     @property
     def chart_loading_bars(self):

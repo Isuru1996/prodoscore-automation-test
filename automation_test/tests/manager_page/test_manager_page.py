@@ -43,21 +43,12 @@ from automation_test.utils.testdata_utils import (
 )
 
 
-@pytest.fixture(scope="class", name="base_manager_page")
+@pytest.fixture(scope="function", name="manager_page")
 def go_to_manager_page(dashboard_page, logger):
     """Navigates to the manager page from the dashboard."""
     logger.info("Navigating to manager page")
     manager_page = dashboard_page.go_to_manager_page()
     yield manager_page
-
-
-@pytest.fixture(scope="function", name="manager_page")
-def refresh_manager_page(base_manager_page, logger):
-    """Refreshes the manager page and returns it."""
-    logger.info("Refreshing manager page")
-    base_manager_page.refresh_page()
-    base_manager_page.wait_for_manager_table_loading_complete()
-    return base_manager_page
 
 
 @pytest.fixture(scope="class", name="manager_page_testdata")

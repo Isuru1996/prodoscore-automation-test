@@ -1,6 +1,10 @@
 # Test Settings Configuration
 environment: staging
-base_url: https://your-app.com
+base_url: https://stg02.prv-prodoscore.com
+
+# Authentication
+auth:
+  auth_state_file: auth_state.json
 
 # Browser Settings
 browser:
