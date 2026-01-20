@@ -2,6 +2,10 @@ from enum import Enum
 
 
 class TestUser(Enum):
+    """Enum for test user identifiers."""
+
+    __test__ = False
+
     LOGIN_USER = "login_user"
     USER_1 = "user_1"
     USER_2 = "user_2"

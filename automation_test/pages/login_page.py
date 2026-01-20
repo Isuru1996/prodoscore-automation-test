@@ -6,7 +6,6 @@ from .dashboard_page import DashboardPage
 class LoginPage(BasePage):
     def __init__(self, page, base_url: str = "https://stg02.prv-prodoscore.com"):
         super().__init__(page, page_name="LoginPage")
-        # self.base_url = base_url
         self.page_url = f"{base_url}/"
 
     @property
@@ -38,6 +37,7 @@ class LoginPage(BasePage):
         return self.page.get_by_role("button", name="Yes")
 
     def login_via_microsoft(self) -> DashboardPage:
+        """Perform login via Microsoft authentication."""
         self.navigate_to(self.page_url)
         self.click_locator(self.microsoft_sign_in_button, "Microsoft Sign In Button")
         self.click_locator(self.email_input, "Email Input")

@@ -5,6 +5,7 @@ from automation_lib.config import TestDataLoader
 from playwright.sync_api import expect
 
 from automation_test.constants.enums import IsAppUser, Role, TestUser, ViewStatus
+from automation_test.constants.enums.department import Department
 from automation_test.constants.enums.employee_status import EmployeeStatus
 from automation_test.constants.enums.status import Status
 from automation_test.db.employee_prodoscore_utils import (
@@ -20,6 +21,8 @@ from automation_test.db.organization_prodoscore_utils import (
     insert_organization_prodoscore,
 )
 from automation_test.helpers.manager_page_test_utils import (
+    assert_date_reset_to_from_date,
+    assert_department_placeholder,
     assert_hover_and_distribution_bars,
     assert_manager_prodoscore_and_team_prodoscore,
     assert_manager_prodoscore_team_prodoscore_and_team_distributions,
@@ -30,6 +33,7 @@ from automation_test.helpers.manager_page_test_utils import (
     assert_manager_table_sorted_by_percentage_change,
     assert_manager_table_sorted_by_prodoscore,
     assert_manager_under_page_navigation,
+    assert_notification_type,
     assert_percentage_change,
 )
 from automation_test.models import Employee, EmployeeProdoscore, OrganizationProdoscore
@@ -96,7 +100,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -172,7 +176,7 @@ class TestManagerPage:
         expect(manager_page.direct_team_prodoscore_columnheader).to_be_visible()
         expect(manager_page.percent_change_columnheader).to_be_visible()
 
-        # Use helper for row count and sorting assertion
+        # Verify row count and sorting
         assert_manager_table_sorted_and_row_count(manager_page, [login_user, user_1])
 
     @pytest.mark.order(2)
@@ -190,12 +194,12 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get main user, user_2 and user_3
+        # Get user_1, user_2 and user_3
         user_1 = employees.get(TestUser.USER_1.val)
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
 
-        # Change role & view status of main user
+        # Change role & view status of user_1
         user_1.change_role(Role.ADMINISTRATOR.id)
         user_1.change_view_status(ViewStatus.COMPANY.val)
         user_1.commit(db_client)
@@ -245,7 +249,7 @@ class TestManagerPage:
         # Wait for the manager table to be visible after refresh
         manager_page.wait_for_manager_table_loading_complete()
 
-        # Use helper for row count and sorting assertion
+        # Verify row count and sorting
         assert_manager_table_sorted_and_row_count(manager_page, [user_1, user_2])
 
     @pytest.mark.order(3)
@@ -263,10 +267,10 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get main user
+        # Get user_1
         user_1 = employees.get(TestUser.USER_1.val)
 
-        # Change role & view status of main user
+        # Change role & view status & is_app_user & status of user_1
         user_1.change_role(Role.ADMINISTRATOR.id)
         user_1.change_view_status(ViewStatus.COMPANY.val)
         user_1.change_is_app_user(IsAppUser.ACTIVATE.val)
@@ -314,7 +318,6 @@ class TestManagerPage:
         pagination_users,
         manager_page,
         db_client,
-        from_date,
         current_date,
         request,
         manager_page_testdata,
@@ -387,7 +390,7 @@ class TestManagerPage:
         expect(manager_page.manager_page_next_button).to_be_disabled()
         expect(manager_page.manager_page_last_button).to_be_disabled()
 
-        # Changes date range to "This Month"
+        # Change date range to "This Month"
         manager_page.change_date_range("this-month")
 
         # Wait for the manager table to be visible after refresh
@@ -433,24 +436,13 @@ class TestManagerPage:
         )
 
         # Validate notification type is warning
-        expected_type = "warning"
-        actual_type = manager_page.get_notification_type()
-        assert actual_type == expected_type, (
-            f"Notification type mismatch.\n"
-            f"Actual: {actual_type}\n"
-            f"Expected: {expected_type}"
-        )
+        assert_notification_type(manager_page, "warning")
 
         # Wait for notification to disappear
         manager_page.wait_for_hidden_notification_row()
 
         # Verify to date is reset to from_date
-        actual_to_date = manager_page.get_to_date_value()
-        assert actual_to_date == from_date, (
-            f"To date not reset to from date.\n"
-            f"Actual: {actual_to_date}\n"
-            f"Expected: {from_date}"
-        )
+        assert_date_reset_to_from_date(manager_page, from_date)
 
     @pytest.mark.order(6)
     @pytest.mark.manager_page
@@ -467,7 +459,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get main user, user_2 and user_3
+        # Get user_1, user_2 and user_3
         user_1 = employees.get(TestUser.USER_1.val)
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
@@ -539,18 +531,18 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user, user_1 and user_2
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
         user_2 = employees.get(TestUser.USER_2.val)
 
-        # Change role & view status for both users
+        # Change role & view status for all three users
         for user in [login_user, user_1, user_2]:
             user.change_role(Role.ADMINISTRATOR.id)
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_3, user_4, user_5, and user_6
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
@@ -617,18 +609,18 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user, user_1 and user_2
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
         user_2 = employees.get(TestUser.USER_2.val)
 
-        # Change role & view status for both users
+        # Change role & view status for all three users
         for user in [login_user, user_1, user_2]:
             user.change_role(Role.ADMINISTRATOR.id)
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_3, user_4, user_5, and user_6
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
@@ -695,7 +687,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -705,14 +697,13 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get users for subordinates
+        # Get user_2, user_3, user_4, user_5, and user_6
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
         user_6 = employees.get(TestUser.USER_6.val)
 
-        # Todo: Need to change view status
         # Change manager and role of user_2
         user_2.change_manager(login_user)
         user_2.change_role(Role.MANAGER.id)
@@ -779,15 +770,15 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get user_1
         user_1 = employees.get(TestUser.USER_1.val)
 
-        # Change role & view status for main user
+        # Change role & view status for user_1
         user_1.change_role(Role.ADMINISTRATOR.id)
         user_1.change_view_status(ViewStatus.COMPANY.val)
         user_1.commit(db_client)
 
-        # Get users for subordinates
+        # Get user_2, user_3, and user_4
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
@@ -848,7 +839,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get user_1 and user_2
         user_1 = employees.get(TestUser.USER_1.val)
         user_2 = employees.get(TestUser.USER_2.val)
 
@@ -858,11 +849,11 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get users for subordinates
+        # Get user_3 and user_4
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
 
-        # Change manager and role of user_2
+        # Change manager and role of user_3
         user_3.change_manager(user_1)
         user_3.change_role(Role.MANAGER.id)
         user_3.commit(db_client)
@@ -916,7 +907,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get user_1 and user_2
         user_1 = employees.get(TestUser.USER_1.val)
         user_2 = employees.get(TestUser.USER_2.val)
 
@@ -926,11 +917,11 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get users for subordinates
+        # Get user_3 and user_4
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
 
-        # Change manager and role of user_2
+        # Change manager and role of user_3
         user_3.change_manager(user_1)
         user_3.change_role(Role.MANAGER.id)
         user_3.commit(db_client)
@@ -984,7 +975,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -994,14 +985,14 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_2, user_3, user_4, user_5, and user_6
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
         user_6 = employees.get(TestUser.USER_6.val)
 
-        # Change manager and role of user_3
+        # Change manager and role of user_2
         user_2.change_manager(login_user)
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
@@ -1067,7 +1058,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -1077,14 +1068,14 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_2, user_3, user_4, user_5, and user_6
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
         user_6 = employees.get(TestUser.USER_6.val)
 
-        # Change manager and role of user_3
+        # Change manager and role of user_2
         user_2.change_manager(login_user)
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
@@ -1124,6 +1115,8 @@ class TestManagerPage:
             organization_prodoscore_data, day_map, domain, db_client
         )
 
+        # Todo: Change from date to to_date
+
         # Refresh the page to ensure latest data is loaded
         manager_page.refresh_page()
 
@@ -1153,7 +1146,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -1163,14 +1156,14 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_2, user_3, user_4, user_5, and user_6
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
         user_6 = employees.get(TestUser.USER_6.val)
 
-        # Change manager and role of user_3
+        # Change manager and role of user_2
         user_2.change_manager(login_user)
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
@@ -1239,7 +1232,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -1250,14 +1243,14 @@ class TestManagerPage:
             user.change_status(Status.HIDDEN.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_2, user_3, user_4, user_5, and user_6
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
         user_6 = employees.get(TestUser.USER_6.val)
 
-        # Change manager and role of user_3
+        # Change manager and role of user_2
         user_2.change_manager(login_user)
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
@@ -1321,7 +1314,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -1331,14 +1324,14 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_2, user_3, user_4, user_5, and user_6
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
         user_6 = employees.get(TestUser.USER_6.val)
 
-        # Change manager and role of user_3
+        # Change manager and role of user_2
         user_2.change_manager(login_user)
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
@@ -1405,20 +1398,20 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         user_1 = employees.get(TestUser.USER_1.val)
 
-        # Change role & view status & status for both users
+        # Change role & view status & status for user_1
         user_1.change_role(Role.ADMINISTRATOR.id)
         user_1.change_view_status(ViewStatus.COMPANY.val)
         user_1.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_2, user_3, and user_4
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
 
-        # Change manager and role of user_3
+        # Change manager and role of user_2
         user_2.change_manager(user_1)
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
@@ -1477,22 +1470,22 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
         user_2 = employees.get(TestUser.USER_2.val)
 
-        # Change role & view status & status for both users
+        # Change role & view status & status for all three users
         for user in [login_user, user_1, user_2]:
             user.change_role(Role.ADMINISTRATOR.id)
             user.change_view_status(ViewStatus.TEAM.val)
             user.commit(db_client)
 
-        # Change main user manager as login user
+        # Change user_1 manager as login user
         user_1.change_manager(login_user)
         user_1.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_3, user_4, and user_5
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
@@ -1551,18 +1544,18 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
         user_2 = employees.get(TestUser.USER_2.val)
 
-        # Change role & view status & status for both users
+        # Change role & view status & status for all three users
         for user in [login_user, user_1, user_2]:
             user.change_role(Role.ADMINISTRATOR.id)
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_3, user_4, and user_5
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
@@ -1627,18 +1620,18 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
         user_2 = employees.get(TestUser.USER_2.val)
 
-        # Change role & view status & status for both users
+        # Change role & view status & status for all three users
         for user in [login_user, user_1, user_2]:
             user.change_role(Role.ADMINISTRATOR.id)
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_3, user_4, and user_5
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
@@ -1705,18 +1698,18 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
         user_2 = employees.get(TestUser.USER_2.val)
 
-        # Change role & view status & status for both users
+        # Change role & view status & status for all three users
         for user in [login_user, user_1, user_2]:
             user.change_role(Role.ADMINISTRATOR.id)
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_3, user_4, user_5, and user_6
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
@@ -1737,12 +1730,12 @@ class TestManagerPage:
         user_5.change_role(Role.MANAGER.id)
         user_5.commit(db_client)
 
-        # Change manager and role of user_5
+        # Change manager and role of user_6
         user_6.change_manager(user_2)
         user_6.change_role(Role.MANAGER.id)
         user_6.commit(db_client)
 
-        # Terminate main user and user_5
+        # Terminate user_1 and user_5
         user_1.change_role(Role.TERMINATED.id)
         user_1.commit(db_client)
 
@@ -1793,18 +1786,18 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
         user_2 = employees.get(TestUser.USER_2.val)
 
-        # Change role & view status & status for both users
+        # Change role & view status & status for all three users
         for user in [login_user, user_1, user_2]:
             user.change_role(Role.ADMINISTRATOR.id)
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_3, user_4, user_5, and user_6
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
@@ -1825,12 +1818,12 @@ class TestManagerPage:
         user_5.change_role(Role.MANAGER.id)
         user_5.commit(db_client)
 
-        # Change manager and role of user_5
+        # Change manager and role of user_6
         user_6.change_manager(user_2)
         user_6.change_role(Role.MANAGER.id)
         user_6.commit(db_client)
 
-        # Terminate main user and user_5
+        # Terminate user_1 and user_5
         user_1.change_role(Role.NOT_ACTIVATED.id)
         user_1.commit(db_client)
 
@@ -1881,7 +1874,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -1891,23 +1884,23 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_2, user_3, user_4, and user_5
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
 
-        # Change manager and role of user_3
+        # Change manager and role of user_2
         user_2.change_manager(login_user)
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
 
-        # Change manager and role of user_4
+        # Change manager and role of user_3
         user_3.change_manager(login_user)
         user_3.change_role(Role.MANAGER.id)
         user_3.commit(db_client)
 
-        # Change manager and role of user_5
+        # Change manager and role of user_4
         user_4.change_manager(user_1)
         user_4.change_role(Role.MANAGER.id)
         user_4.commit(db_client)
@@ -1961,7 +1954,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -1971,23 +1964,23 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_2, user_3, user_4, and user_5
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
 
-        # Change manager and role of user_3
+        # Change manager and role of user_2
         user_2.change_manager(login_user)
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
 
-        # Change manager and role of user_4
+        # Change manager and role of user_3
         user_3.change_manager(login_user)
         user_3.change_role(Role.MANAGER.id)
         user_3.commit(db_client)
 
-        # Change manager and role of user_5
+        # Change manager and role of user_4
         user_4.change_manager(user_1)
         user_4.change_role(Role.MANAGER.id)
         user_4.commit(db_client)
@@ -2055,7 +2048,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -2065,23 +2058,23 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_2, user_3, user_4, and user_5
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
 
-        # Change manager and role of user_3
+        # Change manager and role of user_2
         user_2.change_manager(login_user)
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
 
-        # Change manager and role of user_4
+        # Change manager and role of user_3
         user_3.change_manager(login_user)
         user_3.change_role(Role.MANAGER.id)
         user_3.commit(db_client)
 
-        # Change manager and role of user_5
+        # Change manager and role of user_4
         user_4.change_manager(user_1)
         user_4.change_role(Role.MANAGER.id)
         user_4.commit(db_client)
@@ -2155,7 +2148,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -2165,23 +2158,23 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_2, user_3, user_4, and user_5
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
 
-        # Change manager and role of user_3
+        # Change manager and role of user_2
         user_2.change_manager(login_user)
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
 
-        # Change manager and role of user_4
+        # Change manager and role of user_3
         user_3.change_manager(login_user)
         user_3.change_role(Role.MANAGER.id)
         user_3.commit(db_client)
 
-        # Change manager and role of user_5
+        # Change manager and role of user_4
         user_4.change_manager(user_1)
         user_4.change_role(Role.MANAGER.id)
         user_4.commit(db_client)
@@ -2255,7 +2248,7 @@ class TestManagerPage:
         # Get test data for this test case
         test_data = manager_page_testdata.get(request.node.name)
 
-        # Get login user and main user
+        # Get login user and user_1
         login_user = employees.get(TestUser.LOGIN_USER.val)
         user_1 = employees.get(TestUser.USER_1.val)
 
@@ -2265,14 +2258,14 @@ class TestManagerPage:
             user.change_view_status(ViewStatus.COMPANY.val)
             user.commit(db_client)
 
-        # Get user_2 and user_3
+        # Get user_2, user_3, user_4, user_5, and user_6
         user_2 = employees.get(TestUser.USER_2.val)
         user_3 = employees.get(TestUser.USER_3.val)
         user_4 = employees.get(TestUser.USER_4.val)
         user_5 = employees.get(TestUser.USER_5.val)
         user_6 = employees.get(TestUser.USER_6.val)
 
-        # Change manager and role of user_3
+        # Change manager and role of user_2
         user_2.change_manager(login_user)
         user_2.change_role(Role.MANAGER.id)
         user_2.commit(db_client)
@@ -2443,3 +2436,515 @@ class TestManagerPage:
         expect(manager_page.manager_page_previous_button).to_be_disabled()
         expect(manager_page.manager_page_next_button).to_be_enabled()
         expect(manager_page.manager_page_last_button).to_be_enabled()
+
+    @pytest.mark.order(30)
+    @pytest.mark.manager_page
+    def test_department_filter_search_and_multiselect_functionality(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user, user_1 and user_2
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+        user_2 = employees.get(TestUser.USER_2.val)
+
+        # Change role & view status and department for all three users
+        login_user.change_role(Role.ADMINISTRATOR.id)
+        login_user.change_view_status(ViewStatus.COMPANY.val)
+        login_user.change_department(Department.ADMINISTRATION.id)
+        login_user.commit(db_client)
+
+        user_1.change_role(Role.ADMINISTRATOR.id)
+        user_1.change_view_status(ViewStatus.COMPANY.val)
+        user_1.change_department(Department.AUDIT.id)
+        user_1.commit(db_client)
+
+        user_2.change_role(Role.ADMINISTRATOR.id)
+        user_2.change_view_status(ViewStatus.COMPANY.val)
+        user_2.change_department(Department.FINANCE.id)
+        user_2.commit(db_client)
+
+        # Get user_3, user_4, user_5
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager and role of user_3
+        user_3.change_manager(login_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_1)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(user_2)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Click department select dropdown arrow
+        manager_page.department_dropdown_arrow.click()
+
+        # Search administration department in the dropdown
+        manager_page.search_department(Department.ADMINISTRATION.name_str)
+
+        # Wait for search complete
+        manager_page.wait_for_department_search_complete()
+
+        # Unselect select all departments
+        manager_page.click_department_select_all()
+
+        # Select the "Administration" department
+        manager_page.select_department_by_name(Department.ADMINISTRATION.name_str)
+
+        # Clear the search field
+        manager_page.clear_department_search()
+
+        # Search audit department in the dropdown
+        manager_page.search_department(Department.AUDIT.name_str)
+
+        # Wait for search complete
+        manager_page.wait_for_department_search_complete()
+
+        # Select the "Audit" department
+        manager_page.select_department_by_name(Department.AUDIT.name_str)
+
+        # Click department select dropdown arrow
+        manager_page.department_dropdown_arrow.click()
+
+        # Click apply button
+        manager_page.apply_button.click()
+
+        # Wait for the manager table to be visible after applying department filter
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Verify row count and sorting
+        assert_manager_table_sorted_and_row_count(manager_page, [login_user, user_1])
+
+    @pytest.mark.order(31)
+    @pytest.mark.manager_page
+    def test_department_filter_shows_only_managers_in_selected_departments(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user, user_1 and user_2
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+        user_2 = employees.get(TestUser.USER_2.val)
+
+        # Change role & view status and department for all three users
+        login_user.change_role(Role.ADMINISTRATOR.id)
+        login_user.change_view_status(ViewStatus.COMPANY.val)
+        login_user.change_department(Department.ADMINISTRATION.id)
+        login_user.commit(db_client)
+
+        user_1.change_role(Role.ADMINISTRATOR.id)
+        user_1.change_view_status(ViewStatus.COMPANY.val)
+        user_1.change_department(Department.AUDIT.id)
+        user_1.commit(db_client)
+
+        user_2.change_role(Role.ADMINISTRATOR.id)
+        user_2.change_view_status(ViewStatus.COMPANY.val)
+        user_2.change_department(Department.FINANCE.id)
+        user_2.commit(db_client)
+
+        # Get user_3, user_4, user_5
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager and role of user_3
+        user_3.change_manager(login_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_1)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(user_2)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Click department select dropdown arrow
+        manager_page.department_dropdown_arrow.click()
+
+        # Search finance department in the dropdown
+        manager_page.search_department(Department.FINANCE.name_str)
+
+        # Wait for search complete
+        manager_page.wait_for_department_search_complete()
+
+        # Unselect select all departments
+        manager_page.click_department_select_all()
+
+        # Select the "Finance" department
+        manager_page.select_department_by_name(Department.FINANCE.name_str)
+
+        # Click department select dropdown arrow
+        manager_page.department_dropdown_arrow.click()
+
+        # Click apply button
+        manager_page.apply_button.click()
+
+        # Wait for the manager table to be visible after applying department filter
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Verify row count and sorting
+        assert_manager_table_sorted_and_row_count(manager_page, [user_2])
+
+    @pytest.mark.order(32)
+    @pytest.mark.manager_page
+    def test_department_filter_placeholder_shows_selection_before_and_after_apply(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user, user_1 and user_2
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+        user_2 = employees.get(TestUser.USER_2.val)
+
+        # Change role & view status and department for all three users
+        login_user.change_role(Role.ADMINISTRATOR.id)
+        login_user.change_view_status(ViewStatus.COMPANY.val)
+        login_user.change_department(Department.ADMINISTRATION.id)
+        login_user.commit(db_client)
+
+        user_1.change_role(Role.ADMINISTRATOR.id)
+        user_1.change_view_status(ViewStatus.COMPANY.val)
+        user_1.change_department(Department.AUDIT.id)
+        user_1.commit(db_client)
+
+        user_2.change_role(Role.ADMINISTRATOR.id)
+        user_2.change_view_status(ViewStatus.COMPANY.val)
+        user_2.change_department(Department.FINANCE.id)
+        user_2.commit(db_client)
+
+        # Get user_3, user_4, user_5
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager and role of user_3
+        user_3.change_manager(login_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_1)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(user_2)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Click department select dropdown arrow
+        manager_page.department_dropdown_arrow.click()
+
+        # Unselect select all departments
+        manager_page.click_department_select_all()
+
+        # Search administration department in the dropdown
+        manager_page.search_department(Department.ADMINISTRATION.name_str)
+
+        # Wait for search complete
+        manager_page.wait_for_department_search_complete()
+
+        # Select the "Administration" department
+        manager_page.select_department_by_name(Department.ADMINISTRATION.name_str)
+
+        # Clear the search field
+        manager_page.clear_department_search()
+
+        # Search audit department in the dropdown
+        manager_page.search_department(Department.AUDIT.name_str)
+
+        # Wait for search complete
+        manager_page.wait_for_department_search_complete()
+
+        # Select the "Audit" department
+        manager_page.select_department_by_name(Department.AUDIT.name_str)
+
+        # Click department select dropdown arrow
+        manager_page.department_dropdown_arrow.click()
+
+        # Validate placeholder text before applying filter (dropdown closed, selections made)
+        selected_depts = [Department.ADMINISTRATION.name_str, Department.AUDIT.name_str]
+        placeholder_before_apply = (
+            manager_page.get_department_dropdown_placeholder_text()
+        )
+        assert_department_placeholder(
+            placeholder_before_apply, selected_depts, state="before_apply"
+        )
+
+        # Click apply button
+        manager_page.apply_button.click()
+
+        # Wait for the manager table to be visible after applying department filter
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Validate placeholder text after applying filter (filter applied to table)
+        placeholder_after_apply = (
+            manager_page.get_department_dropdown_placeholder_text()
+        )
+        assert_department_placeholder(
+            placeholder_after_apply, selected_depts, state="after_apply"
+        )
+
+    @pytest.mark.order(33)
+    @pytest.mark.manager_page
+    def test_deselecting_select_all_disables_apply_button_and_clears_other_filters(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user, user_1 and user_2
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+        user_2 = employees.get(TestUser.USER_2.val)
+
+        # Change role & view status and department for all three users
+        login_user.change_role(Role.ADMINISTRATOR.id)
+        login_user.change_view_status(ViewStatus.COMPANY.val)
+        login_user.change_department(Department.ADMINISTRATION.id)
+        login_user.commit(db_client)
+
+        user_1.change_role(Role.ADMINISTRATOR.id)
+        user_1.change_view_status(ViewStatus.COMPANY.val)
+        user_1.change_department(Department.AUDIT.id)
+        user_1.commit(db_client)
+
+        user_2.change_role(Role.ADMINISTRATOR.id)
+        user_2.change_view_status(ViewStatus.COMPANY.val)
+        user_2.change_department(Department.FINANCE.id)
+        user_2.commit(db_client)
+
+        # Get user_3, user_4, user_5
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager and role of user_3
+        user_3.change_manager(login_user)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_1)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(user_2)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Assert filter controls are enabled
+        expect(manager_page.apply_button).to_be_enabled()
+        expect(manager_page.role_dropdown_options).to_be_enabled()
+        expect(manager_page.manager_dropdown_options).to_be_enabled()
+        expect(manager_page.employee_dropdown_options).to_be_enabled()
+
+        # Click department select dropdown arrow
+        manager_page.department_dropdown_arrow.click()
+
+        # Unselect select all departments
+        manager_page.click_department_select_all()
+
+        # Assert filter controls are disabled
+        expect(manager_page.apply_button).to_be_disabled()
+        expect(manager_page.role_dropdown_options).to_be_disabled()
+        expect(manager_page.manager_dropdown_options).to_be_disabled()
+        expect(manager_page.employee_dropdown_options).to_be_disabled()
+
+    @pytest.mark.order(34)
+    @pytest.mark.manager_page
+    def test_app_user_department_appears_when_manager_is_valid_and_visible(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        current_date,
+        request,
+        manager_page_testdata,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get user_1
+        user_1 = employees.get(TestUser.USER_1.val)
+
+        # Change role & view status & is_app_user & status & department of user_1
+        user_1.change_role(Role.ADMINISTRATOR.id)
+        user_1.change_view_status(ViewStatus.COMPANY.val)
+        user_1.change_is_app_user(IsAppUser.ACTIVATE.val)
+        # user_1.change_status(EmployeeStatus.INACTIVE.val)
+        user_1.change_department(Department.AUDIT.id)
+        user_1.commit(db_client)
+
+        # Get user_2
+        user_2 = employees.get(TestUser.USER_2.val)
+
+        # Change manager and role of user_2
+        user_2.change_manager(user_1)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Click department select dropdown arrow
+        manager_page.department_dropdown_arrow.click()
+
+        # Search administration department in the dropdown
+        manager_page.search_department(Department.AUDIT.name_str)
+
+        # Wait for search complete
+        manager_page.wait_for_department_search_complete()
+
+        # Verify audit department is shown in the search results
+        assert Department.AUDIT.name_str in manager_page.get_department_result_names()

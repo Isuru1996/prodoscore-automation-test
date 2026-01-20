@@ -30,19 +30,22 @@ class DashboardPage(BasePage):
         return self.page.get_by_role("link", name="/_next/static/media/managers.")
 
     def go_to_manager_page(self) -> ManagerPage:
+        """Navigate to the Manager Page from the Dashboard."""
         self.click_locator(self.toggle_button, "Toggle Button")
         self.click_locator(self.manager_link, "Manager Link")
         self.wait_for_url("**/managers")
         return ManagerPage(self.page)
 
     def get_from_date_value(self) -> str:
+        """Get the text value of the From Date button."""
         return self.get_text(self.from_date_button, "From Date Button")
 
     def get_to_date_value(self) -> str:
+        """Get the text value of the To Date button."""
         return self.get_text(self.to_date_button, "To Date Button")
 
     def wait_for_all_loaders_to_disappear(self):
-        # Wait for all loader elements to be hidden (handles multiple loaders)
+        """Wait for all chart loading bars to disappear."""
         loaders = self.chart_loading_bars
         count = loaders.count()
         for i in range(count):

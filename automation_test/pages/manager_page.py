@@ -2,43 +2,11 @@ from datetime import datetime
 
 from automation_lib.core import BasePage
 
+from automation_test.utils.css_utils import class_to_color_name
 from automation_test.utils.date_utils import to_choose_date_string
 
 
 class ManagerPage(BasePage):
-    @staticmethod
-    def class_to_color_name(class_str: str | None) -> str:
-        """
-        Map a CSS class string to a color name.
-        Example: 'bg-primary-red' -> 'red', 'bg-primary-blue' -> 'blue', etc.
-        Extend this mapping as needed for your color scheme.
-        """
-        if not class_str:
-            return "unknown"
-        color_map = {
-            # Text color classes
-            "text-ds-gray-600": "gray",
-            "text-ds-gray-950": "gray",
-            "text-ds-gray-800": "gray",
-            "text-ds-red-500": "red",
-            "text-ds-blue-500": "blue",
-            "text-black": "black",
-            # Background color classes
-            "bg-primary-red": "red",
-            "bg-primary-blue": "blue",
-            "bg-ds-gray-800": "gray",
-            "bg-warning-100": "yellow",
-            "bg-success-100": "green",
-            "text-primary-blue": "blue",
-            "text-primary-red": "red",
-            "text-primary-gray": "gray",
-            # Add more mappings as needed
-        }
-        for cls in class_str.split():
-            if cls in color_map:
-                return color_map[cls]
-        return "unknown"
-
     def __init__(self, page):
         super().__init__(page, page_name="ManagerPage")
 
@@ -83,12 +51,197 @@ class ManagerPage(BasePage):
         return self.page.get_by_text("All Departments", exact=True)
 
     @property
+    def department_dropdown_options(self):
+        """Locate department dropdown options."""
+        return (
+            self.page.locator('label:has-text("Departments")')
+            .locator("..")
+            .locator("button")
+        )
+
+    @property
+    def department_dropdown_placeholder(self):
+        """Locate department dropdown button placeholder text."""
+        return self.department_dropdown_options.locator("span.truncate")
+
+    def get_department_dropdown_placeholder_text(self) -> str:
+        """Get the text of the department dropdown placeholder."""
+        return self.get_text(
+            self.department_dropdown_placeholder, "Department Dropdown Placeholder"
+        )
+
+    @property
+    def department_dropdown_arrow(self):
+        """Locate department dropdown arrow icon (SVG)."""
+        return self.department_dropdown_options.locator('svg[data-icon="angle-down"]')
+
+    @property
+    def department_dropdown_menu(self):
+        """Locate department dropdown menu container."""
+        return (
+            self.page.locator('label:has-text("Departments")')
+            .locator("..")
+            .locator("div.absolute.z-20")
+        )
+
+    @property
+    def department_search_input(self):
+        """Locate department dropdown search input."""
+        return self.department_dropdown_menu.locator(
+            '> div > input[placeholder="Search"]'
+        )
+
+    def search_department(self, search_text: str) -> None:
+        """Type text into department search input."""
+        self.type_characters_sequentially(
+            self.department_search_input,
+            search_text,
+            delay=500,
+            description="Department Search Input",
+        )
+
+    def clear_department_search(self) -> None:
+        """Clear all characters from department search input."""
+        self.fill_locator(self.department_search_input, "", "Department Search Input")
+
+    @property
+    def department_search_loading_spinner(self):
+        """Locate department search loading spinner."""
+        return self.department_dropdown_menu.locator("div.loader__spinner")
+
+    def wait_for_department_search_complete(self) -> None:
+        """Wait for department search loading spinner to disappear."""
+        self.wait_for(
+            self.department_search_loading_spinner,
+            state="hidden",
+            timeout=10000,
+            description="Department Search Loading Spinner",
+        )
+
+    @property
+    def department_select_all_option(self):
+        """Locate department 'Select All' checkbox option."""
+        return self.department_dropdown_menu.locator("ul > li").first
+
+    @property
+    def department_results_list(self):
+        """Locate department dropdown results list container."""
+        return self.department_dropdown_menu.locator("div.max-h-32.overflow-y-auto")
+
+    def get_department_result_names(self) -> list[str]:
+        """Get all department names from results list."""
+        items = self.department_results_list.locator("li span[title]")
+        return [
+            self.get_attribute(
+                items.nth(i), "title", description="Department Result Name"
+            )
+            for i in range(items.count())
+        ]
+
+    def select_department_by_name(self, department_name: str) -> None:
+        """Select a department by name from the results list."""
+        label_locator = self.department_results_list.locator(
+            f'label:has(span[title="{department_name}"])'
+        )
+        self.click_locator(label_locator, f"Department: {department_name}")
+
+    def click_department_select_all(self) -> None:
+        """Click the 'Select All' checkbox for departments."""
+        self.click_locator(
+            self.department_select_all_option,
+            "Department Select All Checkbox",
+        )
+
+    @property
     def roles_text(self):
         return self.page.get_by_text("Roles", exact=True)
 
     @property
     def role_dropdown(self):
         return self.page.get_by_text("All Roles", exact=True)
+
+    @property
+    def role_dropdown_options(self):
+        """Locate role dropdown options."""
+        return (
+            self.page.locator('label:has-text("Roles")').locator("..").locator("button")
+        )
+
+    @property
+    def role_dropdown_arrow(self):
+        """Locate role dropdown arrow icon (SVG)."""
+        return self.role_dropdown_options.locator('svg[data-icon="angle-down"]')
+
+    @property
+    def role_dropdown_menu(self):
+        """Locate role dropdown menu container."""
+        return (
+            self.page.locator('label:has-text("Roles")')
+            .locator("..")
+            .locator("div.absolute.z-20")
+        )
+
+    @property
+    def role_search_input(self):
+        """Locate role dropdown search input."""
+        return self.role_dropdown_menu.locator('> div > input[placeholder="Search"]')
+
+    def search_role(self, search_text: str) -> None:
+        """Type text into role search input."""
+        self.type_characters_sequentially(
+            self.role_search_input,
+            search_text,
+            delay=1000,
+            description="Role Search Input",
+        )
+
+    def clear_role_search(self) -> None:
+        """Clear all characters from role search input."""
+        self.fill_locator(self.role_search_input, "", "Role Search Input")
+
+    @property
+    def role_search_loading_spinner(self):
+        """Locate role search loading spinner."""
+        return self.role_dropdown_menu.locator("div.loader__spinner")
+
+    def wait_for_role_search_complete(self) -> None:
+        """Wait for role search loading spinner to disappear."""
+        self.wait_for(
+            self.role_search_loading_spinner,
+            state="hidden",
+            timeout=10000,
+            description="Role Search Loading Spinner",
+        )
+
+    @property
+    def role_select_all_option(self):
+        """Locate role 'Select All' checkbox option."""
+        return self.role_dropdown_menu.locator("ul > li").first
+
+    @property
+    def role_results_list(self):
+        """Locate role dropdown results list container."""
+        return self.role_dropdown_menu.locator("div.max-h-32.overflow-y-auto")
+
+    def get_role_result_names(self) -> list[str]:
+        """Get all role names from results list."""
+        items = self.role_results_list.locator("li span[title]")
+        return [self.get_attribute(items.nth(i), "title") for i in range(items.count())]
+
+    def select_role_by_name(self, role_name: str) -> None:
+        """Select a role by name from the results list."""
+        label_locator = self.role_results_list.locator(
+            f'label:has(span[title="{role_name}"])'
+        )
+        checkbox_locator = label_locator.locator('input[type="checkbox"]')
+        self.check_locator(checkbox_locator, f"Role: {role_name}")
+
+    def click_role_select_all(self) -> None:
+        """Click the 'Select All' checkbox for roles."""
+        self.check_locator(
+            self.role_select_all_option.locator('input[type="checkbox"]'),
+            "Role Select All Checkbox",
+        )
 
     @property
     def managers_text(self):
@@ -99,12 +252,184 @@ class ManagerPage(BasePage):
         return self.page.get_by_text("All Managers", exact=True)
 
     @property
+    def manager_dropdown_options(self):
+        """Locate manager dropdown options."""
+        return (
+            self.page.locator('label:has-text("Managers")')
+            .locator("..")
+            .locator("button")
+        )
+
+    @property
+    def manager_dropdown_arrow(self):
+        """Locate manager dropdown arrow icon (SVG)."""
+        return self.manager_dropdown_options.locator('svg[data-icon="angle-down"]')
+
+    @property
+    def manager_dropdown_menu(self):
+        """Locate manager dropdown menu container."""
+        return (
+            self.page.locator('label:has-text("Managers")')
+            .locator("..")
+            .locator("div.absolute.z-20")
+        )
+
+    @property
+    def manager_search_input(self):
+        """Locate manager dropdown search input."""
+        return self.manager_dropdown_menu.locator('> div > input[placeholder="Search"]')
+
+    def search_manager(self, search_text: str) -> None:
+        """Type text into manager search input."""
+        self.type_characters_sequentially(
+            self.manager_search_input,
+            search_text,
+            delay=1000,
+            description="Manager Search Input",
+        )
+
+    def clear_manager_search(self) -> None:
+        """Clear all characters from manager search input."""
+        self.fill_locator(self.manager_search_input, "", "Manager Search Input")
+
+    @property
+    def manager_search_loading_spinner(self):
+        """Locate manager search loading spinner."""
+        return self.manager_dropdown_menu.locator("div.loader__spinner")
+
+    def wait_for_manager_search_complete(self) -> None:
+        """Wait for manager search loading spinner to disappear."""
+        self.wait_for(
+            self.manager_search_loading_spinner,
+            state="hidden",
+            timeout=10000,
+            description="Manager Search Loading Spinner",
+        )
+
+    @property
+    def manager_select_all_option(self):
+        """Locate manager 'Select All' checkbox option."""
+        return self.manager_dropdown_menu.locator("ul > li").first
+
+    @property
+    def manager_results_list(self):
+        """Locate manager dropdown results list container."""
+        return self.manager_dropdown_menu.locator("div.max-h-32.overflow-y-auto")
+
+    def get_manager_result_names(self) -> list[str]:
+        """Get all manager names from results list."""
+        items = self.manager_results_list.locator("li span[title]")
+        return [self.get_attribute(items.nth(i), "title") for i in range(items.count())]
+
+    def select_manager_by_name(self, manager_name: str) -> None:
+        """Select a manager by name from the results list."""
+        label_locator = self.manager_results_list.locator(
+            f'label:has(span[title="{manager_name}"])'
+        )
+        checkbox_locator = label_locator.locator('input[type="checkbox"]')
+        self.check_locator(checkbox_locator, f"Manager: {manager_name}")
+
+    def click_manager_select_all(self) -> None:
+        """Click the 'Select All' checkbox for managers."""
+        self.check_locator(
+            self.manager_select_all_option.locator('input[type="checkbox"]'),
+            "Manager Select All Checkbox",
+        )
+
+    @property
     def employees_text(self):
         return self.page.locator("#main-section").get_by_text("Employees", exact=True)
 
     @property
     def employee_dropdown(self):
         return self.page.get_by_text("All Employees", exact=True)
+
+    @property
+    def employee_dropdown_options(self):
+        """Locate employee dropdown options."""
+        return (
+            self.page.locator('label:has-text("Employees")')
+            .locator("..")
+            .locator("button")
+        )
+
+    @property
+    def employee_dropdown_arrow(self):
+        """Locate employee dropdown arrow icon (SVG)."""
+        return self.employee_dropdown_options.locator('svg[data-icon="angle-down"]')
+
+    @property
+    def employee_dropdown_menu(self):
+        """Locate employee dropdown menu container."""
+        return (
+            self.page.locator('label:has-text("Employees")')
+            .locator("..")
+            .locator("div.absolute.z-20")
+        )
+
+    @property
+    def employee_search_input(self):
+        """Locate employee dropdown search input."""
+        return self.employee_dropdown_menu.locator(
+            '> div > input[placeholder="Search"]'
+        )
+
+    def search_employee(self, search_text: str) -> None:
+        """Type text into employee search input."""
+        self.type_characters_sequentially(
+            self.employee_search_input,
+            search_text,
+            delay=1000,
+            description="Employee Search Input",
+        )
+
+    def clear_employee_search(self) -> None:
+        """Clear all characters from employee search input."""
+        self.fill_locator(self.employee_search_input, "", "Employee Search Input")
+
+    @property
+    def employee_search_loading_spinner(self):
+        """Locate employee search loading spinner."""
+        return self.employee_dropdown_menu.locator("div.loader__spinner")
+
+    def wait_for_employee_search_complete(self) -> None:
+        """Wait for employee search loading spinner to disappear."""
+        self.wait_for(
+            self.employee_search_loading_spinner,
+            state="hidden",
+            timeout=10000,
+            description="Employee Search Loading Spinner",
+        )
+
+    @property
+    def employee_select_all_option(self):
+        """Locate employee 'Select All' checkbox option."""
+        return self.employee_dropdown_menu.locator("ul > li").first
+
+    @property
+    def employee_results_list(self):
+        """Locate employee dropdown results list container."""
+        return self.employee_dropdown_menu.locator("div.max-h-32.overflow-y-auto")
+
+    def get_employee_result_names(self) -> list[str]:
+        """Get all employee names from results list."""
+        items = self.employee_results_list.locator("li span[title]")
+        return [self.get_attribute(items.nth(i), "title") for i in range(items.count())]
+
+    def select_employee_by_name(self, employee_name: str) -> None:
+        """Select an employee by name from the results list."""
+        label_locator = self.employee_results_list.locator(
+            f'label:has(span[title="{employee_name}"])'
+        )
+        checkbox_locator = label_locator.locator('input[type="checkbox"]')
+        self.check_locator(checkbox_locator, f"Employee: {employee_name}")
+
+    def click_employee_select_all(self) -> None:
+        """Click the 'Select All' checkbox for employees."""
+        self.check_locator(
+            self.employee_select_all_option.locator('input[type="checkbox"]'),
+            "Employee Select All Checkbox",
+        )
 
     @property
     def apply_button(self):
@@ -458,7 +783,7 @@ class ManagerPage(BasePage):
         prodoscore_p = tds.nth(1).locator("p")
         prodoscore = prodoscore_p.inner_text()
         prodoscore_class = prodoscore_p.get_attribute("class")
-        prodoscore_color = self.class_to_color_name(prodoscore_class)
+        prodoscore_color = class_to_color_name(prodoscore_class)
 
         # Team distribution: handle multiple bars (segments)
         team_distribution_bars = []
@@ -467,7 +792,7 @@ class ManagerPage(BasePage):
             bar = team_distribution_bar_divs.nth(i)
             value = bar.inner_text()
             bar_class = bar.get_attribute("class")
-            color = self.class_to_color_name(bar_class)
+            color = class_to_color_name(bar_class)
             team_distribution_bars.append({"value": value, "color": color})
         # Sort bars by color order: blue, gray, red
         color_order = {"red": 0, "gray": 1, "blue": 2}
@@ -482,15 +807,13 @@ class ManagerPage(BasePage):
         percent_change_p = percent_change_div.locator("p")
         percent_change = percent_change_p.inner_text()
         percent_change_class = percent_change_div.get_attribute("class")
-        percent_change_color = self.class_to_color_name(percent_change_class)
+        percent_change_color = class_to_color_name(percent_change_class)
 
         # Direct team prodoscore value and color (from class)
         direct_team_prodoscore_p = tds.nth(3).locator("p")
         direct_team_prodoscore = direct_team_prodoscore_p.inner_text()
         direct_team_prodoscore_class = direct_team_prodoscore_p.get_attribute("class")
-        direct_team_prodoscore_color = self.class_to_color_name(
-            direct_team_prodoscore_class
-        )
+        direct_team_prodoscore_color = class_to_color_name(direct_team_prodoscore_class)
 
         # Handle dash ('-') for prodoscore and direct_team_prodoscore
         def parse_score(score):
@@ -562,10 +885,10 @@ class ManagerPage(BasePage):
             count_cell = row.locator("td").nth(2)
             percent_value = percent_cell.inner_text().strip()
             percent_class = percent_cell.get_attribute("class")
-            percent_color = self.class_to_color_name(percent_class)
+            percent_color = class_to_color_name(percent_class)
             count_value = count_cell.inner_text().strip()
             count_class = count_cell.get_attribute("class")
-            count_color = self.class_to_color_name(count_class)
+            count_color = class_to_color_name(count_class)
             result[label_map[label]] = {
                 "percentage": {"value": percent_value, "color": percent_color},
                 "count": {"value": count_value, "color": count_color},
