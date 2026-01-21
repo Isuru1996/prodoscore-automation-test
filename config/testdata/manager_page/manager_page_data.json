@@ -1687,5 +1687,319 @@
         }
       }
     }
+  },
+  "test_role_filter_search_and_multiselect_functionality": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_3": { "score": 57 }
+            }
+          },
+          "user_1": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_4": { "score": 52 }
+            }
+          },
+          "user_2": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_role_filter_shows_only_managers_in_selected_roles": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_3": { "score": 57 }
+            }
+          },
+          "user_1": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_4": { "score": 52 }
+            }
+          },
+          "user_2": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_role_filter_placeholder_shows_selection_before_and_after_apply": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_3": { "score": 57 }
+            }
+          },
+          "user_1": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_4": { "score": 52 }
+            }
+          },
+          "user_2": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_deselecting_role_select_all_disables_apply_button_and_clears_other_filters": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_3": { "score": 57 }
+            }
+          },
+          "user_1": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_4": { "score": 52 }
+            }
+          },
+          "user_2": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_app_user_role_appears_when_manager_is_valid_and_visible": {
+    "employee_prodoscores": {
+      "current_week": {
+        "day7": {
+          "user_1": {
+            "self": {
+              "score": 35
+            },
+            "subordinates": {
+              "user_2": {
+                "score": 80
+              }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores": {
+      "current_week": {
+        "day7": {
+          "score": 1
+        }
+      }
+    }
+  },
+  "test_employee_filter_search_and_multiselect_functionality": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_3": { "score": 57 }
+            }
+          },
+          "user_1": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_4": { "score": 52 }
+            }
+          },
+          "user_2": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_employee_filter_shows_only_selected_managers": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_3": { "score": 57 }
+            }
+          },
+          "user_1": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_4": { "score": 52 }
+            }
+          },
+          "user_2": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_employee_filter_placeholder_shows_selection_before_and_after_apply": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_3": { "score": 57 }
+            }
+          },
+          "user_1": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_4": { "score": 52 }
+            }
+          },
+          "user_2": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_deselecting_department_select_all_in_employee_filter_disables_other_filters": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "login_user": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_3": { "score": 57 }
+            }
+          },
+          "user_1": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_4": { "score": 52 }
+            }
+          },
+          "user_2": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_app_user_employee_appears_when_manager_is_valid_and_visible": {
+    "employee_prodoscores": {
+      "current_week": {
+        "day7": {
+          "user_1": {
+            "self": {
+              "score": 35
+            },
+            "subordinates": {
+              "user_2": {
+                "score": 80
+              }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores": {
+      "current_week": {
+        "day7": {
+          "score": 1
+        }
+      }
+    }
   }
 }

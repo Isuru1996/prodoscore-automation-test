@@ -816,75 +816,80 @@ def assert_manager_prodoscore_with_no_score(
         )
 
 
-def assert_department_placeholder(
-    placeholder_text: str, selected_departments: list[str], state: str = "after_apply"
+def assert_filters_placeholder(
+    placeholder_text: str, selected_options: list[str], state: str = "after_apply"
 ) -> None:
     """
-    Assert department dropdown placeholder shows correct selection.
+    Assert dropdown placeholder shows correct selection.
     Args:
-        placeholder_text: The actual text displayed in the department dropdown placeholder.
-        selected_departments: List of selected department names.
+        placeholder_text: The actual text displayed in the filter dropdown placeholder.
+        selected_options: List of selected option names.
         state: Filter state - "before_apply" (dropdown closed) or "after_apply" (filter applied).
                Default is "after_apply".
     """
-    if len(selected_departments) == 0:
+    if len(selected_options) == 0:
         # When no departments are selected, placeholder should show "All Departments"
-        expected_text = "All Departments"
-        assert placeholder_text == expected_text, (
-            f"Department placeholder mismatch for no selections ({state}).\n"
+        expected_text = [
+            "All Departments",
+            "All Roles",
+            "All Managers",
+            "All Employees",
+        ]
+        assert placeholder_text in expected_text, (
+            f"Filter placeholder mismatch for no selections ({state}).\n"
             f"Actual: {placeholder_text}\n"
             f"Expected: {expected_text}"
         )
-    elif len(selected_departments) == 1:
+    elif len(selected_options) == 1:
         # When one department is selected, placeholder should contain the department name (possibly truncated)
-        expected_department = selected_departments[0]
-        # Check if the department name prefix is present (handle truncation)
-        department_prefix = expected_department[:10]
-        assert department_prefix in placeholder_text, (
-            f"Department placeholder mismatch for single selection ({state}).\n"
+        expected_option = selected_options[0]
+        # Check if the option name prefix is present (handle truncation)
+        option_prefix = expected_option[:10]
+        assert option_prefix in placeholder_text, (
+            f"Filter placeholder mismatch for single selection ({state}).\n"
             f"Actual: {placeholder_text}\n"
-            f"Expected to contain: {department_prefix}"
+            f"Expected to contain: {option_prefix}"
         )
     else:
-        # When multiple departments are selected, placeholder format differs based on state
-        first_department = selected_departments[0]
-        additional_count = len(selected_departments) - 1
+        # When multiple options are selected, placeholder format differs based on state
+        first_option = selected_options[0]
+        additional_count = len(selected_options) - 1
 
         if state == "before_apply":
             # Before apply: shorter truncation (e.g., "Admin") + "and more"
             # Example: "Admin... and more..."
-            first_dept_prefix = first_department[:5]  # Shorter truncation before apply
+            first_option_prefix = first_option[:5]  # Shorter truncation before apply
             expected_count_text = "and more"
 
-            # Assert first department prefix is present
-            assert first_dept_prefix in placeholder_text, (
-                f"Department placeholder missing first department name (before_apply).\n"
+            # Assert first option prefix is present
+            assert first_option_prefix in placeholder_text, (
+                f"Filter placeholder missing first option name (before_apply).\n"
                 f"Actual: {placeholder_text}\n"
-                f"Expected to contain: {first_dept_prefix}"
+                f"Expected to contain: {first_option_prefix}"
             )
 
             # Assert "and more" is present (without specific count)
             assert expected_count_text in placeholder_text, (
-                f"Department placeholder missing count message (before_apply).\n"
+                f"Filter placeholder missing count message (before_apply).\n"
                 f"Actual: {placeholder_text}\n"
                 f"Expected to contain: '{expected_count_text}'"
             )
         else:  # state == "after_apply"
             # After apply: longer truncation (e.g., "Administra") + "X more"
             # Example: "Administra... and  1 more ..."
-            first_dept_prefix = first_department[:10]  # Longer truncation after apply
+            first_option_prefix = first_option[:10]  # Longer truncation after apply
             expected_count_text = f"{additional_count} more"
 
-            # Assert first department prefix is present
-            assert first_dept_prefix in placeholder_text, (
-                f"Department placeholder missing first department name (after_apply).\n"
+            # Assert first option prefix is present
+            assert first_option_prefix in placeholder_text, (
+                f"Filter placeholder missing first option name (after_apply).\n"
                 f"Actual: {placeholder_text}\n"
-                f"Expected to contain: {first_dept_prefix}"
+                f"Expected to contain: {first_option_prefix}"
             )
 
             # Assert count with number is present
             assert expected_count_text in placeholder_text, (
-                f"Department placeholder missing count message (after_apply).\n"
+                f"Filter placeholder missing count message (after_apply).\n"
                 f"Actual: {placeholder_text}\n"
                 f"Expected to contain: '{expected_count_text}'"
             )

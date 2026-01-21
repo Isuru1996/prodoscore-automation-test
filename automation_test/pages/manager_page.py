@@ -168,6 +168,17 @@ class ManagerPage(BasePage):
         )
 
     @property
+    def role_dropdown_placeholder(self):
+        """Locate role dropdown button placeholder text."""
+        return self.role_dropdown_options.locator("span.truncate")
+
+    def get_role_dropdown_placeholder_text(self) -> str:
+        """Get the text of the role dropdown placeholder."""
+        return self.get_text(
+            self.role_dropdown_placeholder, "Role Dropdown Placeholder"
+        )
+
+    @property
     def role_dropdown_arrow(self):
         """Locate role dropdown arrow icon (SVG)."""
         return self.role_dropdown_options.locator('svg[data-icon="angle-down"]')
@@ -191,7 +202,7 @@ class ManagerPage(BasePage):
         self.type_characters_sequentially(
             self.role_search_input,
             search_text,
-            delay=1000,
+            delay=500,
             description="Role Search Input",
         )
 
@@ -233,13 +244,12 @@ class ManagerPage(BasePage):
         label_locator = self.role_results_list.locator(
             f'label:has(span[title="{role_name}"])'
         )
-        checkbox_locator = label_locator.locator('input[type="checkbox"]')
-        self.check_locator(checkbox_locator, f"Role: {role_name}")
+        self.click_locator(label_locator, f"Role: {role_name}")
 
     def click_role_select_all(self) -> None:
         """Click the 'Select All' checkbox for roles."""
-        self.check_locator(
-            self.role_select_all_option.locator('input[type="checkbox"]'),
+        self.click_locator(
+            self.role_select_all_option,
             "Role Select All Checkbox",
         )
 
@@ -258,6 +268,17 @@ class ManagerPage(BasePage):
             self.page.locator('label:has-text("Managers")')
             .locator("..")
             .locator("button")
+        )
+
+    @property
+    def manager_dropdown_placeholder(self):
+        """Locate manager dropdown button placeholder text."""
+        return self.manager_dropdown_options.locator("span.truncate")
+
+    def get_manager_dropdown_placeholder_text(self) -> str:
+        """Get the text of the manager dropdown placeholder."""
+        return self.get_text(
+            self.manager_dropdown_placeholder, "Manager Dropdown Placeholder"
         )
 
     @property
@@ -284,7 +305,7 @@ class ManagerPage(BasePage):
         self.type_characters_sequentially(
             self.manager_search_input,
             search_text,
-            delay=1000,
+            delay=500,
             description="Manager Search Input",
         )
 
@@ -326,13 +347,12 @@ class ManagerPage(BasePage):
         label_locator = self.manager_results_list.locator(
             f'label:has(span[title="{manager_name}"])'
         )
-        checkbox_locator = label_locator.locator('input[type="checkbox"]')
-        self.check_locator(checkbox_locator, f"Manager: {manager_name}")
+        self.click_locator(label_locator, f"Manager: {manager_name}")
 
     def click_manager_select_all(self) -> None:
         """Click the 'Select All' checkbox for managers."""
-        self.check_locator(
-            self.manager_select_all_option.locator('input[type="checkbox"]'),
+        self.click_locator(
+            self.manager_select_all_option,
             "Manager Select All Checkbox",
         )
 
@@ -351,6 +371,17 @@ class ManagerPage(BasePage):
             self.page.locator('label:has-text("Employees")')
             .locator("..")
             .locator("button")
+        )
+
+    @property
+    def employee_dropdown_placeholder(self):
+        """Locate employee dropdown button placeholder text."""
+        return self.employee_dropdown_options.locator("span.truncate")
+
+    def get_employee_dropdown_placeholder_text(self) -> str:
+        """Get the text of the employee dropdown placeholder."""
+        return self.get_text(
+            self.employee_dropdown_placeholder, "Employee Dropdown Placeholder"
         )
 
     @property
@@ -379,7 +410,7 @@ class ManagerPage(BasePage):
         self.type_characters_sequentially(
             self.employee_search_input,
             search_text,
-            delay=1000,
+            delay=500,
             description="Employee Search Input",
         )
 
@@ -421,13 +452,12 @@ class ManagerPage(BasePage):
         label_locator = self.employee_results_list.locator(
             f'label:has(span[title="{employee_name}"])'
         )
-        checkbox_locator = label_locator.locator('input[type="checkbox"]')
-        self.check_locator(checkbox_locator, f"Employee: {employee_name}")
+        self.click_locator(label_locator, f"Employee: {employee_name}")
 
     def click_employee_select_all(self) -> None:
         """Click the 'Select All' checkbox for employees."""
-        self.check_locator(
-            self.employee_select_all_option.locator('input[type="checkbox"]'),
+        self.click_locator(
+            self.employee_select_all_option,
             "Employee Select All Checkbox",
         )
 
