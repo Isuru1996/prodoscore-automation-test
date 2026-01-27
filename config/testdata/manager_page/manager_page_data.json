@@ -2136,5 +2136,32 @@
         }
       }
     }
+  },
+  "test_no_network_request_sent_before_apply_button_clicked": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "user_2": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_4": { "score": 57 }
+            }
+          },
+          "user_3": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
   }
 }

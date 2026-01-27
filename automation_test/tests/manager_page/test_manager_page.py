@@ -4489,3 +4489,139 @@ class TestManagerPage:
 
         # Verify user_1 manager is shown in the search results
         assert user_1.full_name in manager_page.get_manager_result_names()
+
+    @pytest.mark.order(50)
+    @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
+    def test_no_network_request_sent_before_apply_button_clicked(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user, user_1 and user_2
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+
+        # Change role & view status for all three users
+        login_user.change_role(Role.ADMINISTRATOR.id)
+        login_user.change_view_status(ViewStatus.COMPANY.val)
+        login_user.commit(db_client)
+
+        user_1.change_role(Role.ADMINISTRATOR.id)
+        user_1.change_view_status(ViewStatus.COMPANY.val)
+        user_1.commit(db_client)
+
+        # Get user_2, user_3, user_4, user_5
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change department, manager, role and view status of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.change_view_status(ViewStatus.TEAM.val)
+        user_2.change_department(Department.AUDIT.id)
+        user_2.commit(db_client)
+
+        # Change manager, role and view status of user_3
+        user_3.change_manager(user_1)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.change_view_status(ViewStatus.TEAM.val)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_2)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(user_3)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Start monitoring ALL requests (no pattern = capture everything)
+        manager_page.start_request_monitoring()
+
+        # Click department select dropdown arrow
+        manager_page.department_dropdown_arrow.click()
+        manager_page.click_department_select_all()
+        manager_page.search_department(Department.AUDIT.name_str)
+        manager_page.wait_for_department_search_complete()
+        manager_page.select_department_by_name(Department.AUDIT.name_str)
+        manager_page.department_dropdown_arrow.click()
+
+        # Click role select dropdown arrow
+        manager_page.role_dropdown_arrow.click()
+        manager_page.click_role_select_all()
+        manager_page.search_role(Role.MANAGER.name_str)
+        manager_page.wait_for_role_search_complete()
+        manager_page.select_role_by_name(Role.MANAGER.name_str)
+        manager_page.role_dropdown_arrow.click()
+
+        # Click manager select dropdown arrow
+        manager_page.manager_dropdown_arrow.click()
+        manager_page.click_manager_select_all()
+        manager_page.search_manager(login_user.full_name)
+        manager_page.wait_for_manager_search_complete()
+        manager_page.select_manager_by_name(login_user.full_name)
+        manager_page.manager_dropdown_arrow.click()
+
+        # Click employee select dropdown arrow
+        manager_page.employee_dropdown_arrow.click()
+        manager_page.click_employee_select_all()
+        manager_page.search_employee(user_2.full_name)
+        manager_page.wait_for_employee_search_complete()
+        manager_page.select_employee_by_name(user_2.full_name)
+        manager_page.employee_dropdown_arrow.click()
+
+        # Validate number of requests before applying filter
+        request_count_before_apply = manager_page.get_request_count(
+            "**/api/v2/dashboard/employees**"
+        )
+        assert request_count_before_apply == 0, (
+            f"Request count mismatch before applying manager filter.\n"
+            f"Actual: {request_count_before_apply}\n"
+            f"Expected: 0"
+        )
+
+        # Click apply button
+        manager_page.apply_button.click()
+
+        # Wait for the manager table to be visible after applying manager filter
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Clean up
+        manager_page.stop_request_monitoring()
+
+        # Verify row count and sorting
+        assert_manager_table_sorted_and_row_count(manager_page, [user_2])
