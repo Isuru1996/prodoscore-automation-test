@@ -316,8 +316,8 @@ wheels = [
 
 [[package]]
 name = "prodoscore-automation-library"
-version = "0.1.0"
-source = { editable = "../prodoscore-automation-library" }
+version = "0.0.1"
+source = { path = "../prodoscore-automation-library/dist/prodoscore_automation_library-0.0.1-py3-none-any.whl" }
 dependencies = [
     { name = "allure-pytest" },
     { name = "mysql-connector-python" },
@@ -330,6 +330,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "slack-sdk" },
     { name = "tenacity" },
+]
+wheels = [
+    { filename = "prodoscore_automation_library-0.0.1-py3-none-any.whl", hash = "sha256:cdd1d757d9be3aab216fac88d7aec6ab24d4e21242c02d62060ebc6f04e64020" },
 ]
 
 [package.metadata]
@@ -349,14 +352,14 @@ requires-dist = [
 
 [[package]]
 name = "prodoscore-automation-test"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "prodoscore-automation-library" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "prodoscore-automation-library", editable = "../prodoscore-automation-library" }]
+requires-dist = [{ name = "prodoscore-automation-library", path = "../prodoscore-automation-library/dist/prodoscore_automation_library-0.0.1-py3-none-any.whl" }]
 
 [[package]]
 name = "pyee"

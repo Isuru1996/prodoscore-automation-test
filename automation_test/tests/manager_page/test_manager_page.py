@@ -2439,6 +2439,7 @@ class TestManagerPage:
 
     @pytest.mark.order(30)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_department_filter_search_and_multiselect_functionality(
         self,
         domain,
@@ -2555,6 +2556,7 @@ class TestManagerPage:
 
     @pytest.mark.order(31)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_department_filter_shows_only_managers_in_selected_departments(
         self,
         domain,
@@ -2659,6 +2661,7 @@ class TestManagerPage:
 
     @pytest.mark.order(32)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_department_filter_placeholder_shows_selection_before_and_after_apply(
         self,
         domain,
@@ -2789,7 +2792,8 @@ class TestManagerPage:
 
     @pytest.mark.order(33)
     @pytest.mark.manager_page
-    def test_deselecting_select_all_disables_apply_button_and_clears_other_filters(
+    @pytest.mark.manager_page_filters
+    def test_deselecting_department_select_all_disables_apply_button_and_clears_other_filters(
         self,
         domain,
         employees,
@@ -2884,6 +2888,7 @@ class TestManagerPage:
 
     @pytest.mark.order(34)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_app_user_department_appears_when_manager_is_valid_and_visible(
         self,
         domain,
@@ -2951,6 +2956,7 @@ class TestManagerPage:
 
     @pytest.mark.order(35)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_role_filter_search_and_multiselect_functionality(
         self,
         domain,
@@ -3064,6 +3070,7 @@ class TestManagerPage:
 
     @pytest.mark.order(36)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_role_filter_shows_only_managers_in_selected_roles(
         self,
         domain,
@@ -3165,6 +3172,7 @@ class TestManagerPage:
 
     @pytest.mark.order(37)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_role_filter_placeholder_shows_selection_before_and_after_apply(
         self,
         domain,
@@ -3288,6 +3296,7 @@ class TestManagerPage:
 
     @pytest.mark.order(38)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_deselecting_role_select_all_disables_apply_button_and_clears_other_filters(
         self,
         domain,
@@ -3380,6 +3389,7 @@ class TestManagerPage:
 
     @pytest.mark.order(39)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_app_user_role_appears_when_manager_is_valid_and_visible(
         self,
         domain,
@@ -3446,6 +3456,7 @@ class TestManagerPage:
 
     @pytest.mark.order(40)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_employee_filter_search_and_multiselect_functionality(
         self,
         domain,
@@ -3559,6 +3570,7 @@ class TestManagerPage:
 
     @pytest.mark.order(41)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_employee_filter_shows_only_selected_managers(
         self,
         domain,
@@ -3660,6 +3672,7 @@ class TestManagerPage:
 
     @pytest.mark.order(42)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_employee_filter_placeholder_shows_selection_before_and_after_apply(
         self,
         domain,
@@ -3783,7 +3796,8 @@ class TestManagerPage:
 
     @pytest.mark.order(43)
     @pytest.mark.manager_page
-    def test_deselecting_department_select_all_in_employee_filter_disables_other_filters(
+    @pytest.mark.manager_page_filters
+    def test_deselecting_employee_select_all_in_employee_filter_disables_other_filters(
         self,
         domain,
         employees,
@@ -3861,11 +3875,11 @@ class TestManagerPage:
         expect(manager_page.role_dropdown_options).to_be_enabled()
         expect(manager_page.manager_dropdown_options).to_be_enabled()
 
-        # Click department select dropdown arrow
-        manager_page.department_dropdown_arrow.click()
+        # Click employee select dropdown arrow
+        manager_page.employee_dropdown_arrow.click()
 
-        # Unselect select all departments
-        manager_page.click_department_select_all()
+        # Unselect select all employees
+        manager_page.click_employee_select_all()
 
         # Assert filter controls are disabled
         expect(manager_page.apply_button).to_be_disabled()
@@ -3875,6 +3889,7 @@ class TestManagerPage:
 
     @pytest.mark.order(44)
     @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
     def test_app_user_employee_appears_when_manager_is_valid_and_visible(
         self,
         domain,
@@ -3938,3 +3953,539 @@ class TestManagerPage:
 
         # Verify user_1 employee is shown in the search results
         assert user_1.full_name in manager_page.get_employee_result_names()
+
+    @pytest.mark.order(45)
+    @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
+    def test_manager_filter_search_and_multiselect_functionality(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user, user_1 and user_2
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+
+        # Change role & view status for all three users
+        login_user.change_role(Role.ADMINISTRATOR.id)
+        login_user.change_view_status(ViewStatus.COMPANY.val)
+        login_user.commit(db_client)
+
+        user_1.change_role(Role.ADMINISTRATOR.id)
+        user_1.change_view_status(ViewStatus.COMPANY.val)
+        user_1.commit(db_client)
+
+        # Get user_2, user_3, user_4, user_5
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager, role and view status of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.change_view_status(ViewStatus.TEAM.val)
+        user_2.commit(db_client)
+
+        # Change manager, role and view status of user_3
+        user_3.change_manager(user_1)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.change_view_status(ViewStatus.TEAM.val)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_2)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(user_3)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Click manager select dropdown arrow
+        manager_page.manager_dropdown_arrow.click()
+
+        # Unselect select all managers
+        manager_page.click_manager_select_all()
+
+        # Search login user manager in the dropdown
+        manager_page.search_manager(login_user.full_name)
+
+        # Wait for search complete
+        manager_page.wait_for_manager_search_complete()
+
+        # Select the login user manager
+        manager_page.select_manager_by_name(login_user.full_name)
+
+        # Clear the search field
+        manager_page.clear_manager_search()
+
+        # Search user 1 manager in the dropdown
+        manager_page.search_manager(user_1.full_name)
+
+        # Wait for search complete
+        manager_page.wait_for_manager_search_complete()
+
+        # Select the user 1 manager
+        manager_page.select_manager_by_name(user_1.full_name)
+
+        # Click manager select dropdown arrow
+        manager_page.manager_dropdown_arrow.click()
+
+        # Click apply button
+        manager_page.apply_button.click()
+
+        # Wait for the manager table to be visible after applying department filter
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Verify row count and sorting
+        assert_manager_table_sorted_and_row_count(manager_page, [user_2, user_3])
+
+    @pytest.mark.order(46)
+    @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
+    def test_manager_filter_shows_only_selected_managers(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user, user_1 and user_2
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+
+        # Change role & view status for all three users
+        login_user.change_role(Role.ADMINISTRATOR.id)
+        login_user.change_view_status(ViewStatus.COMPANY.val)
+        login_user.commit(db_client)
+
+        user_1.change_role(Role.ADMINISTRATOR.id)
+        user_1.change_view_status(ViewStatus.COMPANY.val)
+        user_1.commit(db_client)
+
+        # Get user_2, user_3, user_4, user_5
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager, role and view status of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.change_view_status(ViewStatus.TEAM.val)
+        user_2.commit(db_client)
+
+        # Change manager, role and view status of user_3
+        user_3.change_manager(user_1)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.change_view_status(ViewStatus.TEAM.val)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_2)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(user_3)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Click manager select dropdown arrow
+        manager_page.manager_dropdown_arrow.click()
+
+        # Unselect select all managers
+        manager_page.click_manager_select_all()
+
+        # Search login user manager in the dropdown
+        manager_page.search_manager(login_user.full_name)
+
+        # Wait for search complete
+        manager_page.wait_for_manager_search_complete()
+
+        # Select the login user manager
+        manager_page.select_manager_by_name(login_user.full_name)
+
+        # Click manager select dropdown arrow
+        manager_page.manager_dropdown_arrow.click()
+
+        # Click apply button
+        manager_page.apply_button.click()
+
+        # Wait for the manager table to be visible after applying department filter
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Verify row count and sorting
+        assert_manager_table_sorted_and_row_count(manager_page, [user_2])
+
+    @pytest.mark.order(47)
+    @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
+    def test_manager_filter_placeholder_shows_selection_before_and_after_apply(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user, user_1 and user_2
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+
+        # Change role & view status for all three users
+        login_user.change_role(Role.ADMINISTRATOR.id)
+        login_user.change_view_status(ViewStatus.COMPANY.val)
+        login_user.commit(db_client)
+
+        user_1.change_role(Role.ADMINISTRATOR.id)
+        user_1.change_view_status(ViewStatus.COMPANY.val)
+        user_1.commit(db_client)
+
+        # Get user_2, user_3, user_4, user_5
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager, role and view status of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.change_view_status(ViewStatus.TEAM.val)
+        user_2.commit(db_client)
+
+        # Change manager, role and view status of user_3
+        user_3.change_manager(user_1)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.change_view_status(ViewStatus.TEAM.val)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_2)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(user_3)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Click manager select dropdown arrow
+        manager_page.manager_dropdown_arrow.click()
+
+        # Unselect select all managers
+        manager_page.click_manager_select_all()
+
+        # Search login user manager in the dropdown
+        manager_page.search_manager(login_user.full_name)
+
+        # Wait for search complete
+        manager_page.wait_for_manager_search_complete()
+
+        # Select the login user manager
+        manager_page.select_manager_by_name(login_user.full_name)
+
+        # Clear the search field
+        manager_page.clear_manager_search()
+
+        # Search user 1 manager in the dropdown
+        manager_page.search_manager(user_1.full_name)
+
+        # Wait for search complete
+        manager_page.wait_for_manager_search_complete()
+
+        # Select the user 1 manager
+        manager_page.select_manager_by_name(user_1.full_name)
+
+        # Click manager select dropdown arrow
+        manager_page.manager_dropdown_arrow.click()
+
+        # Validate placeholder text before applying filter (dropdown closed, selections made)
+        selected_managers = [login_user.full_name, user_1.full_name]
+        placeholder_before_apply = manager_page.get_manager_dropdown_placeholder_text()
+        assert_filters_placeholder(
+            placeholder_before_apply, selected_managers, state="before_apply"
+        )
+
+        # Click apply button
+        manager_page.apply_button.click()
+
+        # Wait for the manager table to be visible after applying department filter
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Validate placeholder text after applying filter (filter applied to table)
+        placeholder_after_apply = manager_page.get_manager_dropdown_placeholder_text()
+        assert_filters_placeholder(
+            placeholder_after_apply, selected_managers, state="after_apply"
+        )
+
+    @pytest.mark.order(48)
+    @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
+    def test_deselecting_manager_select_all_disables_apply_button_and_clears_other_filters(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user, user_1 and user_2
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+
+        # Change role & view status for all three users
+        login_user.change_role(Role.ADMINISTRATOR.id)
+        login_user.change_view_status(ViewStatus.COMPANY.val)
+        login_user.commit(db_client)
+
+        user_1.change_role(Role.ADMINISTRATOR.id)
+        user_1.change_view_status(ViewStatus.COMPANY.val)
+        user_1.commit(db_client)
+
+        # Get user_2, user_3, user_4, user_5
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager, role and view status of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.change_view_status(ViewStatus.TEAM.val)
+        user_2.commit(db_client)
+
+        # Change manager, role and view status of user_3
+        user_3.change_manager(user_1)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.change_view_status(ViewStatus.TEAM.val)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_2)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(user_3)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Assert filter controls are enabled
+        expect(manager_page.apply_button).to_be_enabled()
+        expect(manager_page.department_dropdown_options).to_be_enabled()
+        expect(manager_page.role_dropdown_options).to_be_enabled()
+        expect(manager_page.employee_dropdown_options).to_be_enabled()
+
+        # Click manager select dropdown arrow
+        manager_page.manager_dropdown_arrow.click()
+
+        # Unselect select all managers
+        manager_page.click_manager_select_all()
+
+        # Assert filter controls are disabled
+        expect(manager_page.apply_button).to_be_disabled()
+        expect(manager_page.department_dropdown_options).to_be_disabled()
+        expect(manager_page.role_dropdown_options).to_be_disabled()
+        expect(manager_page.employee_dropdown_options).to_be_disabled()
+
+    @pytest.mark.order(49)
+    @pytest.mark.manager_page
+    @pytest.mark.manager_page_filters
+    def test_app_user_manager_appears_when_manager_is_valid_and_visible(
+        self,
+        domain,
+        employees,
+        manager_page,
+        db_client,
+        manager_page_testdata,
+        current_date,
+        request,
+    ):
+        # Get test data for this test case
+        test_data = manager_page_testdata.get(request.node.name)
+
+        # Get login user, user_1 and user_2
+        login_user = employees.get(TestUser.LOGIN_USER.val)
+        user_1 = employees.get(TestUser.USER_1.val)
+
+        # Change role & view status for all three users
+        login_user.change_role(Role.ADMINISTRATOR.id)
+        login_user.change_view_status(ViewStatus.COMPANY.val)
+        login_user.commit(db_client)
+
+        user_1.change_role(Role.ADMINISTRATOR.id)
+        user_1.change_view_status(ViewStatus.COMPANY.val)
+        user_1.change_is_app_user(IsAppUser.ACTIVATE.val)
+        user_1.commit(db_client)
+
+        # Get user_2, user_3, user_4, user_5
+        user_2 = employees.get(TestUser.USER_2.val)
+        user_3 = employees.get(TestUser.USER_3.val)
+        user_4 = employees.get(TestUser.USER_4.val)
+        user_5 = employees.get(TestUser.USER_5.val)
+
+        # Change manager, role and view status of user_2
+        user_2.change_manager(login_user)
+        user_2.change_role(Role.MANAGER.id)
+        user_2.change_view_status(ViewStatus.TEAM.val)
+        user_2.commit(db_client)
+
+        # Change manager, role and view status of user_3
+        user_3.change_manager(user_1)
+        user_3.change_role(Role.MANAGER.id)
+        user_3.change_view_status(ViewStatus.TEAM.val)
+        user_3.commit(db_client)
+
+        # Change manager and role of user_4
+        user_4.change_manager(user_2)
+        user_4.change_role(Role.MANAGER.id)
+        user_4.commit(db_client)
+
+        # Change manager and role of user_5
+        user_5.change_manager(user_3)
+        user_5.change_role(Role.MANAGER.id)
+        user_5.commit(db_client)
+
+        # Create a map of days
+        employee_prodoscore_data = test_data.get("employee_prodoscores")
+        day_map = map_day_keys_to_dates(employee_prodoscore_data, current_date)
+
+        # Insert employee prodoscores from test data
+        insert_employee_prodoscores_from_testdata(
+            employee_prodoscore_data, day_map, employees, db_client
+        )
+
+        # Insert organization prodoscores from test data
+        organization_prodoscore_data = test_data.get("organization_prodoscores")
+        insert_organization_prodoscores_from_testdata(
+            organization_prodoscore_data, day_map, domain, db_client
+        )
+
+        # Refresh the page to ensure latest data is loaded
+        manager_page.refresh_page()
+
+        # Wait for the manager table to be visible after refresh
+        manager_page.wait_for_manager_table_loading_complete()
+
+        # Click manager select dropdown arrow
+        manager_page.manager_dropdown_arrow.click()
+
+        # Search user_1 manager in the dropdown
+        manager_page.search_manager(user_1.full_name)
+
+        # Wait for search complete
+        manager_page.wait_for_manager_search_complete()
+
+        # Verify user_1 manager is shown in the search results
+        assert user_1.full_name in manager_page.get_manager_result_names()

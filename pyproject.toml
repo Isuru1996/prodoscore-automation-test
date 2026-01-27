@@ -1,12 +1,15 @@
 [project]
 name = "prodoscore-automation-test"
-version = "0.1.0"
+version = "0.0.1"
 description = "Prodoscore automation test suite"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "prodoscore-automation-library",
+    "prodoscore-automation-library==0.0.1",
 ]
+#dependencies = [
+#    "prodoscore-automation-library",
+#]
 
 [build-system]
 requires = ["hatchling"]
@@ -16,4 +19,6 @@ build-backend = "hatchling.build"
 packages = ["automation_test"]
 
 [tool.uv.sources]
-prodoscore-automation-library = { path = "../prodoscore-automation-library", editable = true }
+prodoscore-automation-library = { path = "../prodoscore-automation-library/dist/prodoscore_automation_library-0.0.1-py3-none-any.whl" }
+# [tool.uv.sources]
+# prodoscore-automation-library = { path = "../prodoscore-automation-library", editable = true }
