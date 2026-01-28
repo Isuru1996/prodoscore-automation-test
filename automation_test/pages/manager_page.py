@@ -552,6 +552,10 @@ class ManagerPage(BasePage):
         return self.page.get_by_role("heading", name="No data for selected time")
 
     @property
+    def no_data_for_selected_filters(self):
+        return self.page.get_by_role("heading", name="No data for selected filters.")
+
+    @property
     def no_data_found_image(self):
         return self.page.get_by_role("img", name="No Data")
 
@@ -749,6 +753,15 @@ class ManagerPage(BasePage):
             state="visible",
             timeout=10000,
             description="No Data For Selected Time Heading",
+        )
+
+    def wait_for_no_data_for_selected_filters(self) -> None:
+        """Wait for the no data for selected filters message to appear."""
+        self.wait_for(
+            self.no_data_for_selected_filters,
+            state="visible",
+            timeout=10000,
+            description="No Data For Selected Filters Heading",
         )
 
     def get_number_of_rows_in_manager_table(self) -> int:

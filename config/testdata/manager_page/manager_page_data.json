@@ -2163,5 +2163,113 @@
         }
       }
     }
+  },
+  "test_no_results_message_displayed_when_filters_return_no_matches": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "user_2": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_4": { "score": 57 }
+            }
+          },
+          "user_3": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_filter_dropdown_search_results_cleared_after_apply_button_clicked": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "user_2": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_4": { "score": 57 }
+            }
+          },
+          "user_3": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_all_filters_placeholder_shows_single_selection_before_and_after_apply": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "user_2": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_4": { "score": 57 }
+            }
+          },
+          "user_3": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
+  },
+  "test_reset_button_returns_filters_and_sort_to_default_but_preserves_date_range": {
+    "employee_prodoscores": {
+      "current_week":{
+        "day7":{
+          "user_2": {
+            "self": { "score": 57 },
+            "subordinates": {
+              "user_4": { "score": 57 }
+            }
+          },
+          "user_3": {
+            "self": { "score": 52 },
+            "subordinates": {
+              "user_5": { "score": 52 }
+            }
+          }
+        }
+      }
+    },
+    "organization_prodoscores":{
+      "current_week":{
+        "day7":{
+          "score": 2
+        }
+      }
+    }
   }
 }
